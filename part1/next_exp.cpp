@@ -1,6 +1,8 @@
 #include <math.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <climits>
+#include <iostream>
 
 
 double next_exp(double lambda, int upperBound) {

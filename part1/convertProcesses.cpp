@@ -17,7 +17,7 @@ std::vector<std::string> convertProcesses(int p) {
             result+=number_char;
             pID.push_back(result);
             counter++;
-            if (counter=p) {
+            if (counter==p) {
                 return pID;
             }
         }
