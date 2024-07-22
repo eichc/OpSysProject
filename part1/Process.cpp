@@ -63,3 +63,16 @@ void Process::setCpuBurstTime( int cpuBurstTime ) {
 void Process::setIOBurstTime( int ioBurstTime ) {
     IOBurstTimes.push_back(ioBurstTime);
 }
+
+void Process::outputProcess() {
+    std::cout<<"CPU-bound process "<<pID_<<": arrival time "<<arrivalTime_<<"ms; "<<numBursts_<<" CPU bursts:"<<std::endl;
+    for (int i = 0; i < cpuBurstTimes.size(); i++) {
+        if (i = IOBurstTimes.size()) {
+            std::cout<<"==> CPU burst "<<cpuBurstTimes[i]<<"ms"<<std::endl;
+        }
+        else {
+            std::cout<<"==> CPU burst "<<cpuBurstTimes[i]<<"ms ==> I/O burst "<<*(IOBurstTimes+i)"ms"<<std::endl;
+
+        }
+    }
+}

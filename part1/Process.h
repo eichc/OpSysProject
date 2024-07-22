@@ -1,8 +1,11 @@
 #ifndef PROCESS_H
 #define PROCESS_H
 
+#include <iostream>
 #include <vector>
 #include <string>
+#include <algorithm>
+#include <unistd.h>
 
 class Process {
 public:
@@ -30,6 +33,8 @@ public:
     void setCpuBurstTime( int cpuBurstTime );
 
     void setIOBurstTime( int ioBurstTime );
+    
+    void outputProcess();
 
 private:
     std::string pID_;
