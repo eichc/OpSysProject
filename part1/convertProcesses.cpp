@@ -17,7 +17,6 @@ vector<string> convertProcesses(int p) {
             string result;
             result+=letter;
             result+=number_char;
-            cout << result << endl;
             pID.push_back(result);
             counter++;
             if (counter==p) {

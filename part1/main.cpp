@@ -24,14 +24,13 @@ int main(int argc, char *argv[]) {
     //run loop for each process to assign arrival, burst, etc.
     for (int i = 0; i < n; i++) {
         bool cpuBound = true;
-        if (i > nCPU) {
+        if (i >= nCPU) {
             cpuBound = false;
         }
         string id = pids[i];
         int arrival = floor(next_exp(lambda, upperBound));
         int bursts = ceil(drand48() * 32);
         Process p(id, arrival, bursts, cpuBound);
-        cout << p.getId() << " " << p.getArrivalTime() << " " << p.getNumBursts() << " " << p.isCpuBound() << endl;
         //generate each burst time
         int cpuTime, ioTime;
         for (int j = 0; j < bursts-1; j++) {
@@ -51,5 +50,8 @@ int main(int argc, char *argv[]) {
             cpuTime *= 4;
         }
         p.setCpuBurstTime(cpuTime);
+
+        //output
+        p.outputProcess();
     }
 }
