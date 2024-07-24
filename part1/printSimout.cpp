@@ -15,7 +15,7 @@ void printSimout(int p, int CPUp, int IOp, double CPUavgCPUBurst, double IOavgCP
     SimOut << "-- IO-bound average CPU burst time: " << setprecision(4) << IOavgCPUBurst <<" ms" << endl;
     SimOut << "-- overall average CPU burst time: " << setprecision(4) << avgCPUBurst << " ms" << endl;
     SimOut << "-- CPU-bound average I/O burst time: " << setprecision(4) << CPUavgIOBurst << " ms" << endl;
-    SimOut << "-- I/O-bound average I/o burst time: " << setprecision(4) << IOavgIOBurst << " ms" << endl;
+    SimOut << "-- I/O-bound average I/O burst time: " << setprecision(4) << IOavgIOBurst << " ms" << endl;
     SimOut << "-- overall average I/O burst time: " << setprecision(4) << avgIOBurst << " ms" << endl;
     SimOut.close();
 }
