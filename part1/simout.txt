@@ -1,9 +1,9 @@
--- number of processes: 20
--- number of CPU-bound processes: 12
--- number of I/O-bound processes: 8
--- CPU-bound average CPU burst time: 422.219 ms
--- I/O-bound average CPU burst time: 89.463 ms
--- overall average CPU burst time: 290.028 ms
--- CPU-bound average I/O burst time: 99.933 ms
--- I/O-bound average I/O burst time: 875.913 ms
--- overall average I/O burst time: 408.076 ms
+-- number of processes: 1
+-- number of CPU-bound processes: 0
+-- number of I/O-bound processes: 1
+-- CPU-bound average CPU burst time: 0.000 ms
+-- I/O-bound average CPU burst time: 1.534 ms
+-- overall average CPU burst time: 1.534 ms
+-- CPU-bound average I/O burst time: 0.000 ms
+-- I/O-bound average I/O burst time: 14.897 ms
+-- overall average I/O burst time: 14.897 ms

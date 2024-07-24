@@ -2,6 +2,7 @@
 #include <iostream>
 #include <vector>
 #include <cmath>
+#include <cstdio>
 #include "Process.h"
 
 using namespace std;
@@ -11,7 +12,38 @@ extern double next_exp(double lambda, int upperBound);
 extern void printSimout(int p, int CPUp, int IOp, double CPUavgCPUBurst, double IOavgCPUBurst, double avgCPUBurst, 
     double CPUavgIOBurst, double IOavgIOBurst, double avgIOBurst);
 
+
+bool checkArgs(char* argv[], int n, int nCPU, unsigned int seed, double lambda, int upperBound) {
+    if (string(argv[1]).compare(to_string(n)) != 0 || n < 1) {
+        fprintf(stderr, "ERROR: argv[1] must be an int > 0\n");
+        return false;
+    }
+    if (string(argv[2]).compare(to_string(nCPU)) != 0 || nCPU < 0) {
+        fprintf(stderr, "ERROR: argv[2] must be a positive int\n");
+        return false;
+    }
+    if (string(argv[3]).compare(to_string(seed)) != 0 || seed < 0) {
+        fprintf(stderr, "ERROR: argv[3] must be a positive int\n");
+        return false;
+    }
+    if (lambda < 0) {
+        fprintf(stderr, "ERROR: argv[4] must be a positive double\n");
+        return false;
+    }
+    if (string(argv[5]).compare(to_string(upperBound)) != 0 || upperBound < 0) {
+        fprintf(stderr, "ERROR: argv[5] must be a positive int\n");
+        return false;
+    }
+    return true;
+}
+
 int main(int argc, char *argv[]) {
+    //error check
+    if (argc != 6) {
+        fprintf(stderr, "ERROR: Incorrect number of arguments\n");
+        return -1;
+    }
+
     //get command line args
     int n = atoi(*(argv+1));
     int nCPU = atoi(*(argv+2));
@@ -19,8 +51,13 @@ int main(int argc, char *argv[]) {
     double lambda = atof(*(argv+4));
     int upperBound = atoi(*(argv+5));
     int nIO = n-nCPU;
-    double CPUavgCPUBurst, IOavgCPUBurst, avgCPUBurst, CPUavgIOBurst, IOavgIOBurst, avgIOBurst;
+    double CPUavgCPUBurst = 0, IOavgCPUBurst = 0, avgCPUBurst = 0, CPUavgIOBurst = 0, IOavgIOBurst = 0, avgIOBurst = 0;
     int numCPUavgCPUBurst=0, numIOavgCPUBurst=0, numCPUavgIOBurst=0, numIOavgIOBurst=0;
+
+    //more error checking
+    if (!checkArgs(argv, n, nCPU, seed, lambda, upperBound)) {
+        return -1;
+    }
     
     //initialize random number generator and process ids
     srand48(seed);
@@ -33,7 +70,7 @@ int main(int argc, char *argv[]) {
     } else {
         printf("<<< -- process set (n=%d) with %d CPU-bound processes\n", n, nCPU);
     }
-    printf("<<< -- seed=%d; lambda=%lf; bound=%d\n", seed, lambda, upperBound);
+    printf("<<< -- seed=%d; lambda=%.6f; bound=%d\n", seed, lambda, upperBound);
 
     //run loop for each process to assign arrival, burst, etc.
     for (int i = 0; i < n; i++) {
@@ -87,13 +124,27 @@ int main(int argc, char *argv[]) {
         //output
         p.outputProcess();
     }
+
+    //calculate simout, avoiding division by 0
     avgCPUBurst = CPUavgCPUBurst+IOavgCPUBurst;
     avgIOBurst = CPUavgIOBurst+IOavgIOBurst;
-    avgCPUBurst = ceil((avgCPUBurst/(numCPUavgCPUBurst+numIOavgCPUBurst)) * 1000) / 1000;
-    avgIOBurst = ceil((avgIOBurst/(numIOavgIOBurst+numCPUavgIOBurst)) * 1000) / 1000;
-    CPUavgCPUBurst = ceil((CPUavgCPUBurst/numCPUavgCPUBurst) * 1000) / 1000;
-    CPUavgIOBurst = ceil((CPUavgIOBurst/numCPUavgIOBurst) * 1000) / 1000;
-    IOavgCPUBurst = ceil((IOavgCPUBurst/numIOavgCPUBurst) * 1000) / 1000;
-    IOavgIOBurst = ceil((IOavgIOBurst/numIOavgIOBurst) * 1000) / 1000;
+    if (numCPUavgCPUBurst+numIOavgCPUBurst != 0) {
+        avgCPUBurst = ceil((avgCPUBurst/(numCPUavgCPUBurst+numIOavgCPUBurst)) * 1000) / 1000;
+    }
+    if (numIOavgIOBurst+numCPUavgIOBurst != 0) {
+        avgIOBurst = ceil((avgIOBurst/(numIOavgIOBurst+numCPUavgIOBurst)) * 1000) / 1000;
+    }
+    if (numCPUavgCPUBurst != 0) {
+        CPUavgCPUBurst = ceil((CPUavgCPUBurst/numCPUavgCPUBurst) * 1000) / 1000;
+    }
+    if (numCPUavgIOBurst != 0) {
+        CPUavgIOBurst = ceil((CPUavgIOBurst/numCPUavgIOBurst) * 1000) / 1000;
+    }
+    if (numIOavgCPUBurst != 0) {
+        IOavgCPUBurst = ceil((IOavgCPUBurst/numIOavgCPUBurst) * 1000) / 1000;
+    }
+    if (numIOavgIOBurst != 0) {
+        IOavgIOBurst = ceil((IOavgIOBurst/numIOavgIOBurst) * 1000) / 1000;
+    }
     printSimout(n, nCPU, nIO, CPUavgCPUBurst, IOavgCPUBurst, avgCPUBurst, CPUavgIOBurst, IOavgIOBurst, avgIOBurst);
 }
