@@ -7,6 +7,7 @@
 
 using namespace std;
 
+/* Generate a vector with the pid for each process */
 vector<string> convertProcesses(int p) {
     vector<string> pID;
     int counter=0;

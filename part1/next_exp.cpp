@@ -4,7 +4,7 @@
 #include <climits>
 #include <iostream>
 
-
+/* Generate the next random number using drand48() */
 double next_exp(double lambda, int upperBound) {
     double x = INT_MAX;
     while (x > upperBound) {
