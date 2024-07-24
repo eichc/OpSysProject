@@ -19,16 +19,8 @@ int main(int argc, char *argv[]) {
     double lambda = atof(*(argv+4));
     int upperBound = atoi(*(argv+5));
     int nIO = n-nCPU;
-    double CPUavgCPUBurst;
-    double IOavgCPUBurst;
-    double avgCPUBurst;
-    double CPUavgIOBurst;
-    double IOavgIOBurst;
-    double avgIOBurst;
-    int numCPUavgCPUBurst=0;
-    int numIOavgCPUBurst=0;
-    int numCPUavgIOBurst=0;
-    int numIOavgIOBurst=0;
+    double CPUavgCPUBurst, IOavgCPUBurst, avgCPUBurst, CPUavgIOBurst, IOavgIOBurst, avgIOBurst;
+    int numCPUavgCPUBurst=0, numIOavgCPUBurst=0, numCPUavgIOBurst=0, numIOavgIOBurst=0;
     
     //initialize random number generator and process ids
     srand48(seed);
@@ -83,6 +75,12 @@ int main(int argc, char *argv[]) {
         cpuTime = ceil(next_exp(lambda, upperBound));
         if (cpuBound) {
             cpuTime *= 4;
+
+            CPUavgCPUBurst+=cpuTime;
+            numCPUavgCPUBurst++;
+        } else {
+            IOavgCPUBurst+=cpuTime;
+            numIOavgCPUBurst++;
         }
         p.setCpuBurstTime(cpuTime);
 
@@ -97,5 +95,5 @@ int main(int argc, char *argv[]) {
     CPUavgIOBurst=CPUavgIOBurst/numCPUavgIOBurst;
     IOavgCPUBurst=IOavgCPUBurst/numIOavgCPUBurst;
     IOavgIOBurst=IOavgIOBurst/numIOavgIOBurst;
-    printSimout(int p, int nCPU, int nIO, double CPUavgCPUBurst, double IOavgCPUBurst, double avgCPUBurst, double CPUavgIOBurst, double IOavgIOBurst, double avgIOBurst);
+    printSimout(n, nCPU, nIO, CPUavgCPUBurst, IOavgCPUBurst, avgCPUBurst, CPUavgIOBurst, IOavgIOBurst, avgIOBurst);
 }
