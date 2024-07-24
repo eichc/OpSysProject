@@ -87,13 +87,13 @@ int main(int argc, char *argv[]) {
         //output
         p.outputProcess();
     }
-    avgCPUBurst=CPUavgCPUBurst+IOavgCPUBurst;
-    avgIOBurst=CPUavgIOBurst+IOavgIOBurst;
-    avgCPUBurst=avgCPUBurst/(numCPUavgCPUBurst+numIOavgCPUBurst);
-    avgIOBurst=avgIOBurst/(numIOavgIOBurst+numCPUavgIOBurst);
-    CPUavgCPUBurst=CPUavgCPUBurst/numCPUavgCPUBurst;
-    CPUavgIOBurst=CPUavgIOBurst/numCPUavgIOBurst;
-    IOavgCPUBurst=IOavgCPUBurst/numIOavgCPUBurst;
-    IOavgIOBurst=IOavgIOBurst/numIOavgIOBurst;
+    avgCPUBurst = CPUavgCPUBurst+IOavgCPUBurst;
+    avgIOBurst = CPUavgIOBurst+IOavgIOBurst;
+    avgCPUBurst = ceil((avgCPUBurst/(numCPUavgCPUBurst+numIOavgCPUBurst)) * 1000) / 1000;
+    avgIOBurst = ceil((avgIOBurst/(numIOavgIOBurst+numCPUavgIOBurst)) * 1000) / 1000;
+    CPUavgCPUBurst = ceil((CPUavgCPUBurst/numCPUavgCPUBurst) * 1000) / 1000;
+    CPUavgIOBurst = ceil((CPUavgIOBurst/numCPUavgIOBurst) * 1000) / 1000;
+    IOavgCPUBurst = ceil((IOavgCPUBurst/numIOavgCPUBurst) * 1000) / 1000;
+    IOavgIOBurst = ceil((IOavgIOBurst/numIOavgIOBurst) * 1000) / 1000;
     printSimout(n, nCPU, nIO, CPUavgCPUBurst, IOavgCPUBurst, avgCPUBurst, CPUavgIOBurst, IOavgIOBurst, avgIOBurst);
 }
