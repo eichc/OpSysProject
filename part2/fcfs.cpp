@@ -40,7 +40,7 @@ void fcfs(vector<Process> allP) {
             canStartCpu = true;
         }
         //IO burst completion
-
+        
         //new process arrives
         if (i < allP.size()) {
             newArrivalTime = allP[i].getArrivalTime();

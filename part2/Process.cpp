@@ -127,5 +127,8 @@ int Process::getBlocking() const {
 }
 
 bool operator<(const Process& lhs, const Process& rhs) {
+    if (lhs.getFrontCPU() == rhs.getFrontCPU()) {
+        return lhs.getId().compare(rhs.getId());
+    } 
     return lhs.getFrontCPU() < rhs.getFrontCPU();
 }
