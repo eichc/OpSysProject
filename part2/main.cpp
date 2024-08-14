@@ -86,6 +86,7 @@ int main(int argc, char *argv[]) {
         printf("<<< -- process set (n=%d) with %d CPU-bound processes\n", n, nCPU);
     }
     printf("<<< -- seed=%d; lambda=%.6f; bound=%d\n", seed, lambda, upperBound);
+    vector<Process> allP;
 
     //run loop for each process to assign arrival, burst, etc.
     for (int i = 0; i < n; i++) {
@@ -138,6 +139,7 @@ int main(int argc, char *argv[]) {
 
         //output
         p.outputProcess();
+        allP.push_back(p);
     }
 
     //calculate simout, avoiding division by 0

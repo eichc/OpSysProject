@@ -71,7 +71,7 @@ int main(int argc, char *argv[]) {
         printf("<<< -- process set (n=%d) with %d CPU-bound processes\n", n, nCPU);
     }
     printf("<<< -- seed=%d; lambda=%.6f; bound=%d\n", seed, lambda, upperBound);
-
+    vector<Process> allP;
     //run loop for each process to assign arrival, burst, etc.
     for (int i = 0; i < n; i++) {
         bool cpuBound = true;
@@ -82,7 +82,6 @@ int main(int argc, char *argv[]) {
         int arrival = floor(next_exp(lambda, upperBound));
         int bursts = ceil(drand48() * 32);
         Process p(id, arrival, bursts, cpuBound);
-
         //generate each burst time
         int cpuTime, ioTime;
         for (int j = 0; j < bursts-1; j++) {
@@ -123,6 +122,7 @@ int main(int argc, char *argv[]) {
 
         //output
         p.outputProcess();
+        allP.push_back(p);
     }
 
     //calculate simout, avoiding division by 0
