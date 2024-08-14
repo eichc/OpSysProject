@@ -13,7 +13,7 @@ extern void printSimout(int p, int CPUp, int IOp, double CPUavgCPUBurst, double 
     double CPUavgIOBurst, double IOavgIOBurst, double avgIOBurst);
 
 
-bool checkArgs(char* argv[], int n, int nCPU, unsigned int seed, double lambda, int upperBound) {
+bool checkArgs(char* argv[], int n, int nCPU, unsigned int seed, double lambda, int upperBound, int switchTime, double alpha, int slice) {
     if (string(argv[1]).compare(to_string(n)) != 0 || n < 1) {
         fprintf(stderr, "ERROR: argv[1] must be an int > 0\n");
         return false;
@@ -34,12 +34,24 @@ bool checkArgs(char* argv[], int n, int nCPU, unsigned int seed, double lambda, 
         fprintf(stderr, "ERROR: argv[5] must be a positive int\n");
         return false;
     }
+    if (string(argv[6]).compare(to_string(switchTime)) || switchTime < 0 || switchTime % 2 != 0) {
+        fprintf(stderr, "ERROR: argv[6] must be an even, positive int\n");
+        return false;
+    }
+    if (alpha < 0 || alpha > 1) {
+        fprintf(stderr, "ERROR: argv[7] must be in the range [0, 1]\n");
+        return false;
+    }
+    if (string(argv[8]).compare(to_string(slice)) != 0 || slice < 0) {
+        fprintf(stderr, "ERROR: argv[8] must be a positive int\n");
+        return false;
+    }
     return true;
 }
 
 int main(int argc, char *argv[]) {
     //error check
-    if (argc != 6) {
+    if (argc != 9) {
         fprintf(stderr, "ERROR: Incorrect number of arguments\n");
         return -1;
     }
@@ -50,12 +62,15 @@ int main(int argc, char *argv[]) {
     unsigned int seed = atoi(*(argv+3));
     double lambda = atof(*(argv+4));
     int upperBound = atoi(*(argv+5));
+    int switchTime = atoi(*(argv+6));
+    double alpha = atof(*(argv+7));
+    int slice = atoi(*(argv+8));
     int nIO = n-nCPU;
     double CPUavgCPUBurst = 0, IOavgCPUBurst = 0, avgCPUBurst = 0, CPUavgIOBurst = 0, IOavgIOBurst = 0, avgIOBurst = 0;
     int numCPUavgCPUBurst=0, numIOavgCPUBurst=0, numCPUavgIOBurst=0, numIOavgIOBurst=0;
 
     //more error checking
-    if (!checkArgs(argv, n, nCPU, seed, lambda, upperBound)) {
+    if (!checkArgs(argv, n, nCPU, seed, lambda, upperBound, switchTime, alpha, slice)) {
         return -1;
     }
     
