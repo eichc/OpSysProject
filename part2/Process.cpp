@@ -118,6 +118,14 @@ void Process::outputProcess() {
     }
 }
 
+void Process::setBlocking(int time) {
+    blocking = time;
+}
+
+int Process::getBlocking() const {
+    return blocking;
+}
+
 bool operator<(const Process& lhs, const Process& rhs) {
     return lhs.getFrontCPU() < rhs.getFrontCPU();
 }

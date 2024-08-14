@@ -45,11 +45,15 @@ public:
     
     void outputProcess();
 
+    void setBlocking(int time);
+    int getBlocking() const;
+
 private:
     std::string pID_;
     int arrivalTime_;
     int numBursts_;
     bool cpuBound_;
+    int blocking;
 
     std::vector<int>cpuBurstTimes;
     std::vector<int>IOBurstTimes;
