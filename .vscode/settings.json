@@ -66,6 +66,7 @@
         "numbers": "cpp",
         "ranges": "cpp",
         "span": "cpp",
-        "queue": "cpp"
+        "queue": "cpp",
+        "iomanip": "cpp"
     }
 }
