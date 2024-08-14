@@ -23,6 +23,7 @@ public:
 
 
     // part 2
+    int getNumCPU() const;
     int getFrontCPU() const;
     int getFrontIO() const;
 

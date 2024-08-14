@@ -1,7 +1,7 @@
 #include <queue>
 #include <vector>
 #include "Process.h"
-
+/*
 struct CompareRemainingTime { //need to implement getting remaining cpu burst time
     bool operator()(const Process& p1, const Process& p2) {
         
@@ -54,3 +54,4 @@ void ShortestJobRemaining(std::vector<Process> processes) {
 
     std::cout << "All processes have been completed.\n";
 }
+*/
