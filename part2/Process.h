@@ -21,6 +21,22 @@ public:
     int getNumBursts() const;
     void setNumBursts(int numBursts);
 
+
+    // part 2
+    int getFrontCPU() const;
+    int getFrontIO() const;
+
+    bool isEmptyCPU();
+    bool isEmptyIO();
+
+    int popFrontCPU();
+    int popFrontIO();
+
+    void pushFrontCPU(int cpuBurstTime);
+    void pushFrontIO(int ioBurstTime);
+
+
+
     bool isCpuBound() const;
     void setCpuBound(bool cpuBound);
 

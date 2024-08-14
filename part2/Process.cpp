@@ -23,6 +23,52 @@ bool Process::isCpuBound() const {
     return cpuBound_;
 }
 
+//for p2
+int Process::getFrontCPU() const {
+    return cpuBurstTimes[0];
+}
+
+int Process::getFrontIO() const {
+    return IOBurstTimes[0];
+}
+
+
+bool Process::isEmptyCPU() { //check if this is correct ADD TO THE H FILE
+    return cpuBurstTimes.size() == 0;
+}
+
+bool Process::isEmptyIO() { //check if this is correct ADD TO THE H FILE
+    return IOBurstTimes.size() == 0;
+}
+
+int Process::popFrontCPU() {
+    if (!cpuBurstTimes.empty()) {
+        int front = cpuBurstTimes.front(); 
+        cpuBurstTimes.erase(cpuBurstTimes.begin()); 
+        return front; 
+    }
+    return -1; 
+}
+
+int Process::popFrontIO() {
+    if (!IOBurstTimes.empty()) {
+        int front = IOBurstTimes.front();
+        IOBurstTimes.erase(IOBurstTimes.begin()); 
+        return front; 
+    }
+    return -1;
+}
+
+void Process::pushFrontCPU(int cpuBurstTime) {
+    cpuBurstTimes.insert(cpuBurstTimes.begin(), cpuBurstTime);
+}
+
+void Process::pushFrontIO(int ioBurstTime) {
+    IOBurstTimes.insert(IOBurstTimes.begin(), ioBurstTime);
+}
+
+
+
 //setters
 void Process::setId(const std::string &pID) {
     pID_ = pID;
