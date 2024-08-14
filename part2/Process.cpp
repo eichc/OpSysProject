@@ -117,3 +117,7 @@ void Process::outputProcess() {
         }
     }
 }
+
+bool operator<(const Process& lhs, const Process& rhs) {
+    return lhs.getFrontCPU() < rhs.getFrontCPU();
+}

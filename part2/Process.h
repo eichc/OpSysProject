@@ -36,7 +36,6 @@ public:
     void pushFrontIO(int ioBurstTime);
 
 
-
     bool isCpuBound() const;
     void setCpuBound(bool cpuBound);
 
@@ -55,5 +54,6 @@ private:
     std::vector<int>cpuBurstTimes;
     std::vector<int>IOBurstTimes;
 };
+bool operator<(const Process& lhs, const Process& rhs);
 
 #endif

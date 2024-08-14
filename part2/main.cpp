@@ -164,4 +164,15 @@ int main(int argc, char *argv[]) {
         IOavgIOBurst = ceil((IOavgIOBurst/numIOavgIOBurst) * 1000) / 1000;
     }
     printSimout(n, nCPU, nIO, CPUavgCPUBurst, IOavgCPUBurst, avgCPUBurst, CPUavgIOBurst, IOavgIOBurst, avgIOBurst);
+
+
+    /**
+     * 
+     * 
+     * PART 2 STARTS HERE
+     * 
+     */
+
+    printf("<<< PROJECT PART II\n");
+    printf("<<< -- t_cs=%dms; alpha=%f; t_slice=%dms\n", switchTime, alpha, slice);
 }
