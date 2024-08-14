@@ -63,6 +63,9 @@
         "random": "cpp",
         "string_view": "cpp",
         "fstream": "cpp",
-        "numbers": "cpp"
+        "numbers": "cpp",
+        "ranges": "cpp",
+        "span": "cpp",
+        "queue": "cpp"
     }
 }
