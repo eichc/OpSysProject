@@ -1,10 +1,10 @@
 #include "Process.h"
 
 Process::Process()
-    : pID_(""), arrivalTime_(0), numBursts_(0), cpuBound_(false) {}
+    : pID_(""), arrivalTime_(0), numBursts_(0), cpuBound_(false), blocking(-1) {}
 
 Process::Process(std::string pID, int arrivalTime, int numBursts, bool cpuBound)
-    : pID_(pID), arrivalTime_(arrivalTime), numBursts_(numBursts), cpuBound_(cpuBound) {}
+    : pID_(pID), arrivalTime_(arrivalTime), numBursts_(numBursts), cpuBound_(cpuBound), blocking(-1) {}
 
 //getters
 std::string Process::getId() const {
@@ -24,7 +24,14 @@ bool Process::isCpuBound() const {
 }
 
 //for p2
+int Process::getNumCPU() const {
+    return cpuBurstTimes.size();
+}
+
 int Process::getFrontCPU() const {
+    if (cpuBurstTimes.empty()) {
+        return -1;
+    }
     return cpuBurstTimes[0];
 }
 
@@ -100,22 +107,7 @@ void Process::outputProcess() {
     } else {
         std::cout<<"I/O-bound process ";
     }
-    std::cout <<pID_<<": arrival time "<<arrivalTime_<<"ms; "<<numBursts_;
-    if (numBursts_ == 1) {
-        std::cout << " CPU burst:"<<std::endl;
-    } else {
-        std::cout << " CPU bursts:"<<std::endl;
-    }
-    int n = cpuBurstTimes.size();
-    for (int i = 0; i < n; i++) {
-        if (i == n-1) {
-            std::cout<<"==> CPU burst "<<cpuBurstTimes[i]<<"ms"<<std::endl;
-        }
-        else {
-            std::cout<<"==> CPU burst "<<cpuBurstTimes[i]<<"ms ==> I/O burst "<<IOBurstTimes[i]<<"ms"<<std::endl;
-
-        }
-    }
+    std::cout <<pID_<<": arrival time "<<arrivalTime_<<"ms; "<<numBursts_ << "CPU bursts\n";
 }
 
 void Process::setBlocking(int time) {

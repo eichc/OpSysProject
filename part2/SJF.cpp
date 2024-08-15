@@ -71,3 +71,4 @@ void ShortestJobRemaining(std::vector<Process> processes) {
 
     std::cout << "time " << currentTime << "ms: Simulator ended for SJF [Q empty]" << std::endl;
 }
+*/

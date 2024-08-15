@@ -67,6 +67,7 @@
         "ranges": "cpp",
         "span": "cpp",
         "queue": "cpp",
-        "iomanip": "cpp"
+        "iomanip": "cpp",
+        "xstddef": "cpp"
     }
 }
