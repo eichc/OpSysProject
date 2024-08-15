@@ -36,7 +36,6 @@ public:
     void pushFrontCPU(int cpuBurstTime);
     void pushFrontIO(int ioBurstTime);
 
-
     bool isCpuBound() const;
     void setCpuBound(bool cpuBound);
 
@@ -49,6 +48,10 @@ public:
     void setBlocking(int time);
     int getBlocking() const;
 
+    // Tau methods
+    int getTau() const;
+    void setTau(int newTau);
+
 private:
     std::string pID_;
     int arrivalTime_;
@@ -56,9 +59,12 @@ private:
     bool cpuBound_;
     int blocking;
 
-    std::vector<int>cpuBurstTimes;
-    std::vector<int>IOBurstTimes;
+    int tau_;  // New tau variable
+
+    std::vector<int> cpuBurstTimes;
+    std::vector<int> IOBurstTimes;
 };
+
 bool operator<(const Process& lhs, const Process& rhs);
 
 #endif

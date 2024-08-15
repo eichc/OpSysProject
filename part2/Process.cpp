@@ -6,7 +6,7 @@ Process::Process()
 Process::Process(std::string pID, int arrivalTime, int numBursts, bool cpuBound)
     : pID_(pID), arrivalTime_(arrivalTime), numBursts_(numBursts), cpuBound_(cpuBound), blocking(-1) {}
 
-//getters
+// Getters
 std::string Process::getId() const {
     return pID_;
 }
@@ -39,29 +39,28 @@ int Process::getFrontIO() const {
     return IOBurstTimes[0];
 }
 
-
-bool Process::isEmptyCPU() { //check if this is correct ADD TO THE H FILE
+bool Process::isEmptyCPU() {
     return cpuBurstTimes.size() == 0;
 }
 
-bool Process::isEmptyIO() { //check if this is correct ADD TO THE H FILE
+bool Process::isEmptyIO() {
     return IOBurstTimes.size() == 0;
 }
 
 int Process::popFrontCPU() {
     if (!cpuBurstTimes.empty()) {
-        int front = cpuBurstTimes.front(); 
-        cpuBurstTimes.erase(cpuBurstTimes.begin()); 
-        return front; 
+        int front = cpuBurstTimes.front();
+        cpuBurstTimes.erase(cpuBurstTimes.begin());
+        return front;
     }
-    return -1; 
+    return -1;
 }
 
 int Process::popFrontIO() {
     if (!IOBurstTimes.empty()) {
         int front = IOBurstTimes.front();
-        IOBurstTimes.erase(IOBurstTimes.begin()); 
-        return front; 
+        IOBurstTimes.erase(IOBurstTimes.begin());
+        return front;
     }
     return -1;
 }
@@ -74,9 +73,7 @@ void Process::pushFrontIO(int ioBurstTime) {
     IOBurstTimes.insert(IOBurstTimes.begin(), ioBurstTime);
 }
 
-
-
-//setters
+// Setters
 void Process::setId(const std::string &pID) {
     pID_ = pID;
 }
@@ -93,19 +90,19 @@ void Process::setCpuBound(bool cpuBound) {
     cpuBound_ = cpuBound;
 }
 
-void Process::setCpuBurstTime( int cpuBurstTime ) {
+void Process::setCpuBurstTime(int cpuBurstTime) {
     cpuBurstTimes.push_back(cpuBurstTime);
 }
 
-void Process::setIOBurstTime( int ioBurstTime ) {
+void Process::setIOBurstTime(int ioBurstTime) {
     IOBurstTimes.push_back(ioBurstTime);
 }
 
 void Process::outputProcess() {
     if (cpuBound_) {
-        std::cout<<"CPU-bound process ";
+        std::cout << "CPU-bound process ";
     } else {
-        std::cout<<"I/O-bound process ";
+        std::cout << "I/O-bound process ";
     }
     std::cout <<pID_<<": arrival time "<<arrivalTime_<<"ms; "<<numBursts_ << "CPU bursts\n";
 }
@@ -118,9 +115,18 @@ int Process::getBlocking() const {
     return blocking;
 }
 
+// Tau methods
+int Process::getTau() const {
+    return tau_;
+}
+
+void Process::setTau(int newTau) {
+    tau_ = newTau;
+}
+
 bool operator<(const Process& lhs, const Process& rhs) {
     if (lhs.getFrontCPU() == rhs.getFrontCPU()) {
         return lhs.getId().compare(rhs.getId());
-    } 
-    return lhs.getFrontCPU() > rhs.getFrontCPU();
+    }
+    return lhs.getFrontCPU() < rhs.getFrontCPU();
 }

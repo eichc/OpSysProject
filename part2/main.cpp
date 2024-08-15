@@ -13,6 +13,8 @@ extern void printSimout(int p, int CPUp, int IOp, double CPUavgCPUBurst, double 
     double CPUavgIOBurst, double IOavgIOBurst, double avgIOBurst);
 extern int fcfs(vector<Process> allP, int switchTime);
 
+extern void ShortestJobFirst(std::vector<Process> processes,int switchTime, double lambda, double alpha);
+
 
 bool checkArgs(char* argv[], int n, int nCPU, unsigned int seed, double lambda, int upperBound, int switchTime, double alpha, int slice) {
     if (string(argv[1]).compare(to_string(n)) != 0 || n < 1) {
@@ -175,8 +177,14 @@ int main(int argc, char *argv[]) {
      */
 
     printf("\n<<< PROJECT PART II\n");
-    printf("<<< -- t_cs=%dms; alpha=%f; t_slice=%dms\n", switchTime, alpha, slice);
-    if (fcfs(allP, switchTime) == -1) {
-        return -1;
-    }
+    // printf("<<< -- t_cs=%dms; alpha=%f; t_slice=%dms\n", switchTime, alpha, slice);
+    // if (fcfs(allP, switchTime) == -1) {
+    //     return -1;
+    // }
+
+
+    //testing the sjf thing
+    ShortestJobFirst(allP,switchTime, lambda, alpha);
+
+
 }
