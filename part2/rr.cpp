@@ -9,36 +9,31 @@
 
 using namespace std;
 
-string printQueue(queue<Process> q) {
-    string result = "[Q";
-    if (q.empty()) {
-        result.append(" empty");
-    } else {
-        queue<Process> temp = q;
-        while (!temp.empty()) {
-            result.append(" ").append(temp.front().getId());
-            temp.pop();
-        }
-    }
-    result.append("]");
-    return result;
-}
+extern string printQueue(queue<Process> q);
 
-int fcfs(vector<Process> allP, int switchTime) {
+int rr(vector<Process> allP, int switchTime, int slice) {
     queue<Process> q;
     int time = 0;
-    cout << "time " << time << "ms: Simulator started for FCFS " << printQueue(q) << endl;
+    int preemptions = 0;
+    cout << "time " << time << "ms: Simulator started for RR " << printQueue(q) << endl;
 
     int current = -1;
     unsigned int i = 0;
-    int cpuCompleteTime, newArrivalTime, blockingTime, cpuStartTime, nextStartTime = -1;
-    bool isCpuComplete, canStartCpu, isIOComplete, isNewArrival;
+    int cpuCompleteTime, newArrivalTime, blockingTime, cpuStartTime, preemptTime, nextStartTime = -1;
+    bool isCpuComplete, canStartCpu, isIOComplete, isNewArrival, isPreemption;
     while (!allP.empty()) {
         blockingTime = cpuStartTime = newArrivalTime = INT_MAX;
-        isCpuComplete = canStartCpu = isIOComplete = isNewArrival = false;
+        isCpuComplete = canStartCpu = isIOComplete = isNewArrival = isPreemption = false;
         //cpu burst completion
         if (current != -1) {
-            isCpuComplete = true;
+            if (preemptTime == -1 || cpuCompleteTime == -1) {
+                cerr << "ERROR: Preempt time and Complete time both -1" << endl;
+                return -1;
+            } else if (cpuCompleteTime < preemptTime) {
+                isCpuComplete = true;
+            } else {
+                isPreemption = true;
+            }
         } else if (!q.empty()) { //start using cpu
             canStartCpu = true;
             cpuStartTime = nextStartTime;
@@ -56,13 +51,13 @@ int fcfs(vector<Process> allP, int switchTime) {
             isNewArrival = true;
         }
 
-        if (!isCpuComplete && !canStartCpu && !isIOComplete && !isNewArrival) {
+        if (!isCpuComplete && !canStartCpu && !isIOComplete && !isNewArrival && !isPreemption) {
             cerr << "ERROR: Nothing is able to be done\n";
             return -1;
         }
 
         //complete the cpu burst
-        if (isCpuComplete && min(cpuCompleteTime, blockingTime) == min(cpuCompleteTime, newArrivalTime)) {
+        if ((isCpuComplete) && min(cpuCompleteTime, blockingTime) == min(cpuCompleteTime, newArrivalTime)) {
             time = cpuCompleteTime;
             allP[current].popFrontCPU();
             if (allP[current].isEmptyCPU()) {
@@ -79,13 +74,34 @@ int fcfs(vector<Process> allP, int switchTime) {
             }
             time += switchTime/2;
             current = -1;
-            cpuCompleteTime = INT_MAX;
+            cpuCompleteTime = preemptTime = INT_MAX;
             if (!q.empty()) {
                 nextStartTime = time + switchTime/2;
             } else {
                 nextStartTime = -1;
             }
             
+        } else if ((isPreemption) && min(preemptTime, blockingTime) == min(preemptTime, newArrivalTime)) { //preemption
+            time = preemptTime;
+            int temp = allP[current].popFrontCPU();
+            allP[current].pushFrontCPU(temp - slice);
+            if (q.empty()) {
+                cout << "time " << time << "ms: Time slice expired; no preemption because ready queue is empty " << printQueue(q) << endl;
+                preemptTime = time + slice;
+            } else {
+                cout << "time " << time << "ms: Time slice expired; preempting process " << allP[current].getId() << " with " << allP[current].getFrontCPU() << "ms remaining " << printQueue(q) << endl;
+                q.push(allP[current]);
+                time += switchTime/2;
+                current = -1;
+                cpuCompleteTime = preemptTime = INT_MAX;
+                if (!q.empty()) {
+                    nextStartTime = time + switchTime/2;
+                } else {
+                    nextStartTime = -1;
+                }
+                preemptions++;
+            }
+
         } else if (canStartCpu && min(cpuStartTime, blockingTime) == min(cpuStartTime, newArrivalTime)) { //start next cpu burst
             for (unsigned int j = 0; j < allP.size(); j++) {
                 if (allP[j].getId().compare(q.front().getId()) == 0) {
@@ -101,7 +117,9 @@ int fcfs(vector<Process> allP, int switchTime) {
             }
             int temp = allP[current].getFrontCPU();
             cout << "time " << time << "ms: Process " << allP[current].getId() << " started using the CPU for " << temp << "ms burst " << printQueue(q) << endl;
+            preemptTime = time + slice;
             cpuCompleteTime = time + temp;
+
         } else if (blockingTime < newArrivalTime) { //complete the IO burst
             time = blockingTime;
             for (unsigned int j = 0; j < allP.size(); j++) {
@@ -121,7 +139,7 @@ int fcfs(vector<Process> allP, int switchTime) {
         }
     }
     
-    cout << "time " << time << "ms: Simulator ended for FCFS " << printQueue(q) << endl;
+    cout << "time " << time << "ms: Simulator ended for RR " << printQueue(q) << endl;
 
     return 0;
 }

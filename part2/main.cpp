@@ -12,6 +12,7 @@ extern double next_exp(double lambda, int upperBound);
 extern void printSimout(int p, int CPUp, int IOp, double CPUavgCPUBurst, double IOavgCPUBurst, double avgCPUBurst, 
     double CPUavgIOBurst, double IOavgIOBurst, double avgIOBurst);
 extern int fcfs(vector<Process> allP, int switchTime);
+extern int rr(vector<Process> allP, int switchTime, int slice);
 
 
 bool checkArgs(char* argv[], int n, int nCPU, unsigned int seed, double lambda, int upperBound, int switchTime, double alpha, int slice) {
@@ -177,6 +178,10 @@ int main(int argc, char *argv[]) {
     printf("\n<<< PROJECT PART II\n");
     printf("<<< -- t_cs=%dms; alpha=%f; t_slice=%dms\n", switchTime, alpha, slice);
     if (fcfs(allP, switchTime) == -1) {
+        return -1;
+    }
+    cout << endl;
+    if (rr(allP, switchTime, slice) == -1) {
         return -1;
     }
 }
