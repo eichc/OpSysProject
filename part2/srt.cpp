@@ -7,7 +7,7 @@
 #include "Process.h"
 
 using namespace std;
-
+/*
 // Helper function to calculate the ceiling value of a double
 int ceiling(double value) {
     return static_cast<int>(ceil(value));
@@ -141,3 +141,4 @@ void srt(vector<Process> allP, int switchTime) {
     // Print simulation end
     cout << "time " << currentTime << "ms: Simulator ended for SRT [Q empty]" << endl;
 }
+*/
