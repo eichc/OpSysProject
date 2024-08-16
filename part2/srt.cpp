@@ -28,8 +28,6 @@ std::string printQueueSRT(std::priority_queue<Process> q) {
 void srt(std::vector<Process> processes, int switchTime, double lambda, double alpha) {
     std::priority_queue<Process> SRTqueue;
     int currentTime = 0;
-    //int totalProcesses = processes.size();
-    //int completedProcesses = 0;
     int current = -1;  // Index of the current process in the CPU
     int cpuCompleteTime = INT_MAX;
     unsigned int i = 0;
@@ -40,7 +38,7 @@ void srt(std::vector<Process> processes, int switchTime, double lambda, double a
 
     // Calculate the initial tau based on the given lambda
     int initialTau = std::ceil(1 / lambda);
-    
+
     // Initialize tau for each process
     for (auto& process : processes) {
         process.setTau(initialTau);
@@ -51,10 +49,8 @@ void srt(std::vector<Process> processes, int switchTime, double lambda, double a
         isCpuComplete = canStartCpu = isIOComplete = isNewArrival = isPreemption = false;
 
         // CPU burst completion
-        if (current != -1) {
-            if (cpuCompleteTime < INT_MAX) {
-                isCpuComplete = true;
-            }
+        if (current != -1 && cpuCompleteTime < INT_MAX) {
+            isCpuComplete = true;
         } else if (!SRTqueue.empty()) {  // Start using CPU
             canStartCpu = true;
             cpuStartTime = currentTime + switchTime / 2;
@@ -82,7 +78,7 @@ void srt(std::vector<Process> processes, int switchTime, double lambda, double a
         // Complete the CPU burst
         if (isCpuComplete && std::min(cpuCompleteTime, blockingTime) == std::min(cpuCompleteTime, newArrivalTime)) {
             currentTime = cpuCompleteTime;
-            int x = processes[current].popFrontCPU();
+            int burstTime = processes[current].popFrontCPU();
 
             if (!processes[current].isEmptyCPU()) {
                 if (currentTime <= 9999) {
@@ -90,12 +86,11 @@ void srt(std::vector<Process> processes, int switchTime, double lambda, double a
                 }
 
                 int oldTau = processes[current].getTau();
-                int burstTime = x;
                 int newTau = std::ceil((alpha * burstTime) + ((1 - alpha) * oldTau));
                 processes[current].setTau(newTau);
 
                 if (currentTime <= 9999) {
-                    std::cout << "time " << currentTime << "ms: Recalculated tau for process " << processes[current].getId() 
+                    std::cout << "time " << currentTime << "ms: Recalculated tau for process " << processes[current].getId()
                               << ": old tau " << oldTau << "ms ==> new tau " << newTau << "ms " << printQueueSRT(SRTqueue) << std::endl;
                 }
 
@@ -116,20 +111,22 @@ void srt(std::vector<Process> processes, int switchTime, double lambda, double a
             current = -1;
             cpuCompleteTime = INT_MAX;
 
-        } else if (canStartCpu && std::min(cpuStartTime, blockingTime) == std::min(cpuStartTime, newArrivalTime)) { // Start next CPU burst
+        } else if (canStartCpu && std::min(cpuStartTime, blockingTime) == std::min(cpuStartTime, newArrivalTime)) {
+            // Start next CPU burst
+            Process nextProcess = SRTqueue.top();
+            int remainingTime = processes[current].getFrontCPU() - (cpuCompleteTime - currentTime);
+
             // Preemption check
-            if (!SRTqueue.empty() && !processes.empty()) {
-                Process nextProcess = SRTqueue.top();
-                if (nextProcess.getTau() < processes[current].getTau()) {
-                    // Preempt current process
-                    if (current != -1) {
-                        processes[current].pushFrontCPU(processes[current].getFrontCPU());
-                    }
-                    SRTqueue.push(processes[current]);
-                    current = -1;
-                    cpuCompleteTime = INT_MAX;
-                    canStartCpu = true;
-                }
+            if (current != -1 && nextProcess.getTau() < remainingTime) {
+                std::cout << "time " << currentTime << "ms: Process " << nextProcess.getId()
+                          << " (tau " << nextProcess.getTau() << "ms) completed I/O; preempting " << processes[current].getId()
+                          << " (predicted remaining time " << remainingTime << "ms) " << printQueueSRT(SRTqueue) << std::endl;
+
+                processes[current].pushFrontCPU(remainingTime);
+                SRTqueue.push(processes[current]);
+                current = -1;
+                cpuCompleteTime = INT_MAX;
+                canStartCpu = true;
             }
 
             for (unsigned int j = 0; j < processes.size(); j++) {
@@ -145,20 +142,22 @@ void srt(std::vector<Process> processes, int switchTime, double lambda, double a
                 std::cout << "time " << currentTime << "ms: Process " << processes[current].getId() << " (tau " << processes[current].getTau() << "ms) started using the CPU for " << temp << "ms burst " << printQueueSRT(SRTqueue) << std::endl;
             }
             cpuCompleteTime = currentTime + temp;
-        } else if (blockingTime < newArrivalTime) { // Complete the I/O burst
+        } else if (blockingTime < newArrivalTime) {
+            // Complete the I/O burst
             currentTime = blockingTime;
             for (unsigned int j = 0; j < processes.size(); j++) {
                 if (processes[j].getBlocking() == currentTime) {
                     processes[j].setBlocking(-1);
                     SRTqueue.push(processes[j]);
                     if (currentTime <= 9999) {
-                        std::cout << "time " << currentTime << "ms: Process " << processes[j].getId() <<" (tau " << processes[j].getTau() << "ms) completed I/O; added to ready queue " << printQueueSRT(SRTqueue) << std::endl;
+                        std::cout << "time " << currentTime << "ms: Process " << processes[j].getId() << " (tau " << processes[j].getTau() << "ms) completed I/O; added to ready queue " << printQueueSRT(SRTqueue) << std::endl;
                     }
                     break;
                 }
             }
             
-        } else { // New process arrives
+        } else {
+            // New process arrives
             SRTqueue.push(processes[i]);
             currentTime = processes[i].getArrivalTime();
             if (currentTime <= 9999) {
