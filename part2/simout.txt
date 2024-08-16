@@ -38,6 +38,21 @@ Algorithm SJF
 -- I/O-bound number of preemptions: 0
 -- overall number of preemptions: 0
 
+Algorithm SRT
+-- CPU utilization: 73.958%
+-- CPU-bound average wait time: 116.600 ms
+-- I/O-bound average wait time: 3568.950 ms
+-- overall average wait time: 1650.978 ms
+-- CPU-bound average turnaround time: 1722.840 ms
+-- I/O-bound average turnaround time: 3820.250 ms
+-- overall average turnaround time: 2655.023 ms
+-- CPU-bound number of context switches: 35
+-- I/O-bound number of context switches: 20
+-- overall number of context switches: 55
+-- CPU-bound number of preemptions: 0
+-- I/O-bound number of preemptions: 0
+-- overall number of preemptions: 0
+
 Algorithm RR
 -- CPU utilization: 72.806%
 -- CPU-bound average wait time: 173.280 ms
