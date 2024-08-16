@@ -12,13 +12,9 @@ std::string printQueueSRT(std::priority_queue<Process> q) {
     if (q.empty()) {
         result.append(" empty");
     } else {
-        std::vector<std::string> processIds;
         while (!q.empty()) {
-            processIds.push_back(q.top().getId());
+            result.append(" ").append(q.top().getId());
             q.pop();
-        }
-        for (const auto& id : processIds) {
-            result.append(" ").append(id);
         }
     }
     result.append("]");

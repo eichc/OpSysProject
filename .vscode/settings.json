@@ -68,6 +68,7 @@
         "span": "cpp",
         "queue": "cpp",
         "iomanip": "cpp",
-        "xstddef": "cpp"
+        "xstddef": "cpp",
+        "sstream": "cpp"
     }
 }

@@ -13,7 +13,6 @@ std::string printQueue(std::priority_queue<Process> q) {
     if (q.empty()) {
         result.append(" empty");
     } else {
-        std::vector<std::string> processIds;
         while (!q.empty()) {
             result.append(" ").append(q.top().getId());
             q.pop();
