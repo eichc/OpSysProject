@@ -28,8 +28,8 @@ std::string printQueue(std::priority_queue<Process> q) {
 void ShortestJobFirst(std::vector<Process> processes, int switchTime, double lambda, double alpha) {
     std::priority_queue<Process> SJFqueue;
     int currentTime = 0;
-    int totalProcesses = processes.size();
-    int completedProcesses = 0;
+    //int totalProcesses = processes.size();
+    //int completedProcesses = 0;
     int current = -1;  // Index of the current process in the CPU
     int cpuCompleteTime = INT_MAX;
     unsigned int i = 0;

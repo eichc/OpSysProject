@@ -13,6 +13,8 @@ extern void printSimout(int p, int CPUp, int IOp, double CPUavgCPUBurst, double 
     double CPUavgIOBurst, double IOavgIOBurst, double avgIOBurst);
 extern int fcfs(vector<Process> allP, int switchTime);
 extern int rr(vector<Process> allP, int switchTime, int slice);
+void srt(std::vector<Process> processes, int switchTime, double lambda, double alpha);
+
 
 extern void ShortestJobFirst(std::vector<Process> processes,int switchTime, double lambda, double alpha);
 
@@ -180,12 +182,13 @@ int main(int argc, char *argv[]) {
     printf("\n<<< PROJECT PART II\n");
 
     printf("<<< -- t_cs=%dms; alpha=%f; t_slice=%dms\n", switchTime, alpha, slice);
-    if (fcfs(allP, switchTime) == -1) {
-        return -1;
-    }
-    cout << endl;
-    if (rr(allP, switchTime, slice) == -1) {
-        return -1;
-    }
+    // if (fcfs(allP, switchTime) == -1) {
+    //     return -1;
+    // }
+    // cout << endl;
+    // if (rr(allP, switchTime, slice) == -1) {
+    //     return -1;
+    // }
+    srt(allP, switchTime, lambda, alpha);
   
 }
