@@ -189,9 +189,8 @@ int main(int argc, char *argv[]) {
 
     ShortestJobFirst(allP, switchTime, lambda, alpha);
     cout << endl;
-
+    srt(allP, switchTime, lambda, alpha);
     if (rr(allP, switchTime, slice) == -1) {
         return -1;
     }
-  
 }
