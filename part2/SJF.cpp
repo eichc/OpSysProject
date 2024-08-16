@@ -14,11 +14,8 @@ std::string printQueue(std::priority_queue<Process> q) {
     } else {
         std::vector<std::string> processIds;
         while (!q.empty()) {
-            processIds.push_back(q.top().getId());
+            result.append(" ").append(q.top().getId());
             q.pop();
-        }
-        for (const auto& id : processIds) {
-            result.append(" ").append(id);
         }
     }
     result.append("]");
@@ -84,7 +81,11 @@ void ShortestJobFirst(std::vector<Process> processes, int switchTime, double lam
             
             if (!processes[current].isEmptyCPU()) {
                 if (currentTime <= 9999) {
-                    std::cout << "time " << currentTime << "ms: Process " << processes[current].getId() << " (tau " << processes[current].getTau() << "ms) completed a CPU burst; " << processes[current].getNumCPU() << " bursts to go " << printQueue(SJFqueue) << std::endl;
+                    if (processes[current].getNumCPU() == 1) {
+                        std::cout << "time " << currentTime << "ms: Process " << processes[current].getId() << " (tau " << processes[current].getTau() << "ms) completed a CPU burst; " << processes[current].getNumCPU() << " burst to go " << printQueue(SJFqueue) << std::endl;
+                    } else {
+                        std::cout << "time " << currentTime << "ms: Process " << processes[current].getId() << " (tau " << processes[current].getTau() << "ms) completed a CPU burst; " << processes[current].getNumCPU() << " bursts to go " << printQueue(SJFqueue) << std::endl;
+                    }
                 }
 
                 int oldTau = processes[current].getTau();

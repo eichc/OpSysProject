@@ -141,8 +141,8 @@ int Process::getWaiting() const {
 }
 
 bool operator<(const Process& lhs, const Process& rhs) {
-    if (lhs.getFrontCPU() == rhs.getFrontCPU()) {
-        return lhs.getId().compare(rhs.getId());
+    if (lhs.getTau() == rhs.getTau()) {
+        return lhs.getId().compare(rhs.getId()) > 0;
     }
-    return lhs.getFrontCPU() < rhs.getFrontCPU();
+    return lhs.getTau() > rhs.getTau();
 }
