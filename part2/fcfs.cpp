@@ -1,5 +1,6 @@
 #include <string>
 #include <iostream>
+#include <fstream>
 #include <vector>
 #include <queue>
 #include <cmath>
@@ -24,10 +25,14 @@ string printQueue(queue<Process> q) {
     return result;
 }
 
-int fcfs(vector<Process> allP, int switchTime) {
+int fcfs(vector<Process> allP, int switchTime, int nCPU, int nIO) {
     queue<Process> q;
     int time = 0;
     cout << "time " << time << "ms: Simulator started for FCFS " << printQueue(q) << endl;
+
+    //simout variables
+    double cpuBoundWaitTime = 0, ioBoundWaitTime = 0, cpuBoundBurstTime = 0, ioBoundBurstTime = 0;
+    int cpuSwitches = 0, ioSwitches = 0, numCpuBoundBursts = 0, numIoBoundBursts = 0;
 
     int current = -1;
     unsigned int i = 0;
@@ -64,7 +69,13 @@ int fcfs(vector<Process> allP, int switchTime) {
         //complete the cpu burst
         if (isCpuComplete && min(cpuCompleteTime, blockingTime) == min(cpuCompleteTime, newArrivalTime)) {
             time = cpuCompleteTime;
-            allP[current].popFrontCPU();
+            if (allP[current].isCpuBound()) {
+                cpuBoundBurstTime += allP[current].popFrontCPU();
+                numCpuBoundBursts++;
+            } else {
+                ioBoundBurstTime += allP[current].popFrontCPU();
+                numIoBoundBursts++;
+            }
             if (allP[current].isEmptyCPU()) {
                 cout << "time " << time << "ms: Process " << allP[current].getId() << " terminated " << printQueue(q) << endl;
                 auto itr = allP.begin();
@@ -73,9 +84,13 @@ int fcfs(vector<Process> allP, int switchTime) {
                 }
                 allP.erase(itr);
             } else {
-                cout << "time " << time << "ms: Process " << allP[current].getId() << " completed a CPU burst; " << allP[current].getNumCPU() << " bursts to go " << printQueue(q) << endl;
+                if (allP[current].getNumCPU() == 1) {
+                    if (time < 10000) cout << "time " << time << "ms: Process " << allP[current].getId() << " completed a CPU burst; " << allP[current].getNumCPU() << " burst to go " << printQueue(q) << endl;
+                } else {
+                    if (time < 10000) cout << "time " << time << "ms: Process " << allP[current].getId() << " completed a CPU burst; " << allP[current].getNumCPU() << " bursts to go " << printQueue(q) << endl;
+                }
                 allP[current].setBlocking(time + allP[current].popFrontIO() + switchTime/2);
-                cout << "time " << time << "ms: Process " << allP[current].getId() << " switching out of CPU; blocking on I/O until time " << allP[current].getBlocking() << "ms " << printQueue(q) << endl;
+                if (time < 10000) cout << "time " << time << "ms: Process " << allP[current].getId() << " switching out of CPU; blocking on I/O until time " << allP[current].getBlocking() << "ms " << printQueue(q) << endl;
             }
             time += switchTime/2;
             current = -1;
@@ -99,8 +114,15 @@ int fcfs(vector<Process> allP, int switchTime) {
             } else {
                 time = nextStartTime;
             }
+            if (allP[current].isCpuBound()) {
+                cpuBoundWaitTime += (time - allP[current].getWaiting() - switchTime/2);
+                cpuSwitches++;
+            } else {
+                ioBoundWaitTime += (time - allP[current].getWaiting() - switchTime/2);
+                ioSwitches++;
+            }
             int temp = allP[current].getFrontCPU();
-            cout << "time " << time << "ms: Process " << allP[current].getId() << " started using the CPU for " << temp << "ms burst " << printQueue(q) << endl;
+            if (time < 10000) cout << "time " << time << "ms: Process " << allP[current].getId() << " started using the CPU for " << temp << "ms burst " << printQueue(q) << endl;
             cpuCompleteTime = time + temp;
         } else if (blockingTime < newArrivalTime) { //complete the IO burst
             time = blockingTime;
@@ -108,7 +130,8 @@ int fcfs(vector<Process> allP, int switchTime) {
                 if (allP[j].getBlocking() == time) {
                     allP[j].setBlocking(-1);
                     q.push(allP[j]);
-                    cout << "time " << time << "ms: Process " << allP[j].getId() << " completed I/O; added to ready queue " << printQueue(q) << endl;
+                    if (time < 10000) cout << "time " << time << "ms: Process " << allP[j].getId() << " completed I/O; added to ready queue " << printQueue(q) << endl;
+                    allP[j].setWaiting(time);
                     break;
                 }
             }
@@ -116,12 +139,50 @@ int fcfs(vector<Process> allP, int switchTime) {
         } else { //new process arrives
             q.push(allP[i]);
             time = allP[i].getArrivalTime();
-            cout << "time " << time << "ms: Process " << allP[i].getId() << " arrived; added to ready queue " << printQueue(q) << endl;
+            if (time < 10000) cout << "time " << time << "ms: Process " << allP[i].getId() << " arrived; added to ready queue " << printQueue(q) << endl;
+            allP[i].setWaiting(time);
             i++;
         }
     }
     
     cout << "time " << time << "ms: Simulator ended for FCFS " << printQueue(q) << endl;
 
+    //simout
+    FILE *fp;
+    fp = fopen("simout.txt", "a");
+
+    double utilization = 0;
+    if (time != 0) {
+        utilization = ceil(((cpuBoundBurstTime + ioBoundBurstTime)/time) * 100000) / 1000;
+    }
+    double cpuBoundAvgWait = 0;
+    if (numCpuBoundBursts != 0) {
+        cpuBoundAvgWait = ceil((cpuBoundWaitTime/numCpuBoundBursts) * 1000) / 1000;
+    }
+    double ioBoundAvgWait = 0;
+    if (numIoBoundBursts != 0) {
+        ioBoundAvgWait = ceil((ioBoundWaitTime/numIoBoundBursts) * 1000) / 1000;
+    }
+    double totalAvgWait = 0;
+    if (numCpuBoundBursts + numIoBoundBursts != 0) {
+        totalAvgWait = ceil(((cpuBoundWaitTime + ioBoundWaitTime)/(numCpuBoundBursts + numIoBoundBursts)) * 1000) / 1000;
+    }
+
+    fprintf(fp, "\nAlgorithm FCFS\n");
+    fprintf(fp, "-- CPU utilization: %.3f%%\n", utilization);
+    fprintf(fp, "-- CPU-bound average wait time: %.3f ms\n", cpuBoundAvgWait);
+    fprintf(fp, "-- I/O-bound average wait time: %.3f ms\n", ioBoundAvgWait);
+    fprintf(fp, "-- overall average wait time: %.3f ms\n", totalAvgWait);
+    // fprintf(fp, "-- CPU-bound average turnaround time: %.3f ms\n");
+    // fprintf(fp, "-- I/O-bound average turnaround time: %.3f ms\n");
+    // fprintf(fp, "-- overall average turnaround time: %.3f ms\n");
+    fprintf(fp, "-- CPU-bound number of context switches: %d\n", cpuSwitches);
+    fprintf(fp, "-- I/O-bound number of context switches: %d\n", ioSwitches);
+    fprintf(fp, "-- overall number of context switches: %d\n", cpuSwitches + ioSwitches);
+    fprintf(fp, "-- CPU-bound number of preemptions: 0\n");
+    fprintf(fp, "-- I/O-bound number of preemptions: 0\n");
+    fprintf(fp, "-- overall number of preemptions: 0\n");
+
+    fclose(fp);
     return 0;
 }

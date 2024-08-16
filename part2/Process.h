@@ -52,12 +52,20 @@ public:
     int getTau() const;
     void setTau(int newTau);
 
+    void setRemaining(int time);
+    int getRemaining() const;
+
+    void setWaiting(int time);
+    int getWaiting() const;
+
 private:
     std::string pID_;
     int arrivalTime_;
     int numBursts_;
     bool cpuBound_;
-    int blocking;
+    int blocking; //time until released by IO
+    int remaining; //remaining time if preempted
+    int waiting; //time entered into waiting queue
 
     int tau_;  // New tau variable
 
