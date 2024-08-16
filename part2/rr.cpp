@@ -17,7 +17,7 @@ int rr(vector<Process> allP, int switchTime, int slice) {
     cout << "time " << time << "ms: Simulator started for RR " << printQueue(q) << endl;
 
     //simout variables
-    double cpuBoundWaitTime = 0, ioBoundWaitTime = 0, cpuBoundBurstTime = 0, ioBoundBurstTime = 0;
+    double cpuBoundWaitTime = 0, ioBoundWaitTime = 0, cpuBoundBurstTime = 0, ioBoundBurstTime = 0, cpuSingleSlice = 0, ioSingleSlice = 0;
     int cpuSwitches = 0, ioSwitches = 0, numCpuBoundBursts = 0, numIoBoundBursts = 0, ioPreemptions = 0, cpuPreemptions = 0;
 
     int current = -1;
@@ -63,9 +63,15 @@ int rr(vector<Process> allP, int switchTime, int slice) {
         if ((isCpuComplete) && min(cpuCompleteTime, blockingTime) == min(cpuCompleteTime, newArrivalTime)) {
             time = cpuCompleteTime;
             if (allP[current].isCpuBound()) {
+                if (allP[current].getFrontCPU() <= slice) {
+                    cpuSingleSlice++;
+                }
                 cpuBoundBurstTime += allP[current].popFrontCPU();
                 numCpuBoundBursts++;
             } else {
+                if (allP[current].getFrontCPU() <= slice) {
+                    ioSingleSlice++;
+                }
                 ioBoundBurstTime += allP[current].popFrontCPU();
                 numIoBoundBursts++;
             }
@@ -139,8 +145,10 @@ int rr(vector<Process> allP, int switchTime, int slice) {
             }
             if (allP[current].isCpuBound()) {
                 cpuBoundWaitTime += (time - allP[current].getWaiting() - switchTime/2);
+                cpuSwitches++;
             } else {
                 ioBoundWaitTime += (time - allP[current].getWaiting() - switchTime/2);
+                ioSwitches++;
             }
             int temp;
             if (allP[current].getRemaining() != -1) {
@@ -184,17 +192,23 @@ int rr(vector<Process> allP, int switchTime, int slice) {
     if (time != 0) {
         utilization = ceil(((cpuBoundBurstTime + ioBoundBurstTime)/time) * 100000) / 1000;
     }
-    double cpuBoundAvgWait = 0;
+    double cpuBoundAvgWait = 0, cpuBoundAvgTurn = 0, percentCpuSingleSlice = 0;
     if (numCpuBoundBursts != 0) {
         cpuBoundAvgWait = ceil((cpuBoundWaitTime/numCpuBoundBursts) * 1000) / 1000;
+        cpuBoundAvgTurn = ceil(( (cpuBoundWaitTime+cpuBoundBurstTime+(cpuSwitches*switchTime)) / numCpuBoundBursts) * 1000) / 1000;
+        percentCpuSingleSlice = ceil((cpuSingleSlice/numCpuBoundBursts) * 100000) / 1000;
     }
-    double ioBoundAvgWait = 0;
+    double ioBoundAvgWait = 0, ioBoundAvgTurn = 0, percentIoSingleSlice = 0;
     if (numIoBoundBursts != 0) {
         ioBoundAvgWait = ceil((ioBoundWaitTime/numIoBoundBursts) * 1000) / 1000;
+        ioBoundAvgTurn = ceil(( (ioBoundWaitTime+ioBoundBurstTime+(ioSwitches*switchTime)) / numIoBoundBursts) * 1000) / 1000;
+        percentIoSingleSlice = ceil((ioSingleSlice/numIoBoundBursts) * 100000) / 1000;
     }
-    double totalAvgWait = 0;
+    double totalAvgWait = 0, totalAvgTurn = 0, totalSingleSlice = 0;
     if (numCpuBoundBursts + numIoBoundBursts != 0) {
         totalAvgWait = ceil(((cpuBoundWaitTime + ioBoundWaitTime)/(numCpuBoundBursts + numIoBoundBursts)) * 1000) / 1000;
+        totalAvgTurn = ceil((((cpuBoundWaitTime+cpuBoundBurstTime+(cpuSwitches*switchTime)) + (ioBoundWaitTime+ioBoundBurstTime+(ioSwitches*switchTime)))/(numCpuBoundBursts + numIoBoundBursts)) * 1000) / 1000;
+        totalSingleSlice = ceil(((cpuSingleSlice + ioSingleSlice)/(numCpuBoundBursts + numIoBoundBursts)) * 100000) / 1000;
     }
 
     fprintf(fp, "\nAlgorithm RR\n");
@@ -202,18 +216,18 @@ int rr(vector<Process> allP, int switchTime, int slice) {
     fprintf(fp, "-- CPU-bound average wait time: %.3f ms\n", cpuBoundAvgWait);
     fprintf(fp, "-- I/O-bound average wait time: %.3f ms\n", ioBoundAvgWait);
     fprintf(fp, "-- overall average wait time: %.3f ms\n", totalAvgWait);
-    // fprintf(fp, "-- CPU-bound average turnaround time: %.3f ms\n");
-    // fprintf(fp, "-- I/O-bound average turnaround time: %.3f ms\n");
-    // fprintf(fp, "-- overall average turnaround time: %.3f ms\n");
-    // fprintf(fp, "-- CPU-bound number of context switches: %d\n");
-    // fprintf(fp, "-- I/O-bound number of context switches: %d\n");
-    // fprintf(fp, "-- overall number of context switches: %d\n");
+    fprintf(fp, "-- CPU-bound average turnaround time: %.3f ms\n", cpuBoundAvgTurn);
+    fprintf(fp, "-- I/O-bound average turnaround time: %.3f ms\n", ioBoundAvgTurn);
+    fprintf(fp, "-- overall average turnaround time: %.3f ms\n", totalAvgTurn);
+    fprintf(fp, "-- CPU-bound number of context switches: %d\n", cpuSwitches);
+    fprintf(fp, "-- I/O-bound number of context switches: %d\n", ioSwitches);
+    fprintf(fp, "-- overall number of context switches: %d\n", cpuSwitches + ioSwitches);
     fprintf(fp, "-- CPU-bound number of preemptions: %d\n", cpuPreemptions);
     fprintf(fp, "-- I/O-bound number of preemptions: %d\n", ioPreemptions);
     fprintf(fp, "-- overall number of preemptions: %d\n", cpuPreemptions + ioPreemptions);
-    // fprintf(fp, "-- CPU-bound percentage of CPU bursts completed within one time slice: %.3f%%\n");
-    // fprintf(fp, "-- I/O-bound percentage of CPU bursts completed within one time slice: %.3f%%\n");
-    // fprintf(fp, "-- overall percentage of CPU bursts completed within one time slice: %.3f%%\n");
+    fprintf(fp, "-- CPU-bound percentage of CPU bursts completed within one time slice: %.3f%%\n", percentCpuSingleSlice);
+    fprintf(fp, "-- I/O-bound percentage of CPU bursts completed within one time slice: %.3f%%\n", percentIoSingleSlice);
+    fprintf(fp, "-- overall percentage of CPU bursts completed within one time slice: %.3f%%\n", totalSingleSlice);
 
     fclose(fp);
 

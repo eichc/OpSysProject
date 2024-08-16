@@ -25,7 +25,7 @@ string printQueue(queue<Process> q) {
     return result;
 }
 
-int fcfs(vector<Process> allP, int switchTime, int nCPU, int nIO) {
+int fcfs(vector<Process> allP, int switchTime) {
     queue<Process> q;
     int time = 0;
     cout << "time " << time << "ms: Simulator started for FCFS " << printQueue(q) << endl;
@@ -155,17 +155,20 @@ int fcfs(vector<Process> allP, int switchTime, int nCPU, int nIO) {
     if (time != 0) {
         utilization = ceil(((cpuBoundBurstTime + ioBoundBurstTime)/time) * 100000) / 1000;
     }
-    double cpuBoundAvgWait = 0;
+    double cpuBoundAvgWait = 0, cpuBoundAvgTurn = 0;;
     if (numCpuBoundBursts != 0) {
         cpuBoundAvgWait = ceil((cpuBoundWaitTime/numCpuBoundBursts) * 1000) / 1000;
+        cpuBoundAvgTurn = ceil(( (cpuBoundWaitTime+cpuBoundBurstTime+(cpuSwitches*switchTime)) / numCpuBoundBursts) * 1000) / 1000;
     }
-    double ioBoundAvgWait = 0;
+    double ioBoundAvgWait = 0, ioBoundAvgTurn = 0;
     if (numIoBoundBursts != 0) {
         ioBoundAvgWait = ceil((ioBoundWaitTime/numIoBoundBursts) * 1000) / 1000;
+        ioBoundAvgTurn = ceil(( (ioBoundWaitTime+ioBoundBurstTime+(ioSwitches*switchTime)) / numIoBoundBursts) * 1000) / 1000;
     }
-    double totalAvgWait = 0;
+    double totalAvgWait = 0, totalAvgTurn = 0;
     if (numCpuBoundBursts + numIoBoundBursts != 0) {
         totalAvgWait = ceil(((cpuBoundWaitTime + ioBoundWaitTime)/(numCpuBoundBursts + numIoBoundBursts)) * 1000) / 1000;
+        totalAvgTurn = ceil((((cpuBoundWaitTime+cpuBoundBurstTime+(cpuSwitches*switchTime)) + (ioBoundWaitTime+ioBoundBurstTime+(ioSwitches*switchTime)))/(numCpuBoundBursts + numIoBoundBursts)) * 1000) / 1000;
     }
 
     fprintf(fp, "\nAlgorithm FCFS\n");
@@ -173,9 +176,9 @@ int fcfs(vector<Process> allP, int switchTime, int nCPU, int nIO) {
     fprintf(fp, "-- CPU-bound average wait time: %.3f ms\n", cpuBoundAvgWait);
     fprintf(fp, "-- I/O-bound average wait time: %.3f ms\n", ioBoundAvgWait);
     fprintf(fp, "-- overall average wait time: %.3f ms\n", totalAvgWait);
-    // fprintf(fp, "-- CPU-bound average turnaround time: %.3f ms\n");
-    // fprintf(fp, "-- I/O-bound average turnaround time: %.3f ms\n");
-    // fprintf(fp, "-- overall average turnaround time: %.3f ms\n");
+    fprintf(fp, "-- CPU-bound average turnaround time: %.3f ms\n", cpuBoundAvgTurn);
+    fprintf(fp, "-- I/O-bound average turnaround time: %.3f ms\n", ioBoundAvgTurn);
+    fprintf(fp, "-- overall average turnaround time: %.3f ms\n", totalAvgTurn);
     fprintf(fp, "-- CPU-bound number of context switches: %d\n", cpuSwitches);
     fprintf(fp, "-- I/O-bound number of context switches: %d\n", ioSwitches);
     fprintf(fp, "-- overall number of context switches: %d\n", cpuSwitches + ioSwitches);
