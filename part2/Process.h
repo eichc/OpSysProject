@@ -58,6 +58,12 @@ public:
     void setWaiting(int time);
     int getWaiting() const;
 
+    void setStart(int time);
+    int getStart() const;
+
+    void setPredictedRemaining(int time);
+    int getPredictedRemaining() const;
+
 private:
     std::string pID_;
     int arrivalTime_;
@@ -66,6 +72,8 @@ private:
     int blocking; //time until released by IO
     int remaining; //remaining time if preempted
     int waiting; //time entered into waiting queue
+    int burstStart;
+    int predictedRemaining;
 
     int tau_;  // New tau variable
 
