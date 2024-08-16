@@ -1,10 +1,10 @@
 #include "Process.h"
 
 Process::Process()
-    : pID_(""), arrivalTime_(0), numBursts_(0), cpuBound_(false), blocking(-1) {}
+    : pID_(""), arrivalTime_(0), numBursts_(0), cpuBound_(false), blocking(-1), remaining(-1), waiting(-1) {}
 
 Process::Process(std::string pID, int arrivalTime, int numBursts, bool cpuBound)
-    : pID_(pID), arrivalTime_(arrivalTime), numBursts_(numBursts), cpuBound_(cpuBound), blocking(-1) {}
+    : pID_(pID), arrivalTime_(arrivalTime), numBursts_(numBursts), cpuBound_(cpuBound), blocking(-1), remaining(-1), waiting(-1) {}
 
 // Getters
 std::string Process::getId() const {
@@ -104,7 +104,7 @@ void Process::outputProcess() {
     } else {
         std::cout << "I/O-bound process ";
     }
-    std::cout <<pID_<<": arrival time "<<arrivalTime_<<"ms; "<<numBursts_ << "CPU bursts\n";
+    std::cout <<pID_<<": arrival time "<<arrivalTime_<<"ms; "<<numBursts_ << " CPU bursts\n";
 }
 
 void Process::setBlocking(int time) {
@@ -124,9 +124,25 @@ void Process::setTau(int newTau) {
     tau_ = newTau;
 }
 
+void Process::setRemaining(int time) {
+    remaining = time;
+}
+
+int Process::getRemaining() const {
+    return remaining;
+}
+
+void Process::setWaiting(int time) {
+    waiting = time;
+}
+
+int Process::getWaiting() const {
+    return waiting;
+}
+
 bool operator<(const Process& lhs, const Process& rhs) {
-    if (lhs.getFrontCPU() == rhs.getFrontCPU()) {
-        return lhs.getId().compare(rhs.getId());
+    if (lhs.getTau() == rhs.getTau()) {
+        return lhs.getId().compare(rhs.getId()) > 0;
     }
-    return lhs.getFrontCPU() < rhs.getFrontCPU();
+    return lhs.getTau() > rhs.getTau();
 }
