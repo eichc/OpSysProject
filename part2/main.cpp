@@ -13,6 +13,8 @@ extern void printSimout(int p, int CPUp, int IOp, double CPUavgCPUBurst, double 
     double CPUavgIOBurst, double IOavgIOBurst, double avgIOBurst);
 extern int fcfs(vector<Process> allP, int switchTime, int nCPU, int nIO);
 extern int rr(vector<Process> allP, int switchTime, int slice);
+extern void srt(std::vector<Process> processes, int switchTime, double lambda, double alpha);
+
 
 extern void ShortestJobFirst(std::vector<Process> processes,int switchTime, double lambda, double alpha);
 
