@@ -169,8 +169,8 @@ int Process::getTimeAdded() const {
 }
 
 bool operator<(const Process& lhs, const Process& rhs) {
-    if (lhs.getTau() == rhs.getTau()) {
+    if (lhs.getPredictedRemaining() == rhs.getPredictedRemaining()) {
         return lhs.getId().compare(rhs.getId()) > 0;
     }
-    return lhs.getTau() > rhs.getTau();
+    return lhs.getPredictedRemaining() > rhs.getPredictedRemaining();
 }

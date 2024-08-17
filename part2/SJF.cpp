@@ -47,6 +47,7 @@ void ShortestJobFirst(std::vector<Process> processes, int switchTime, double lam
     // Initialize tau for each process
     for (auto& process : processes) {
         process.setTau(initialTau);
+        process.setPredictedRemaining(initialTau);
     }
 
     while (!processes.empty()) {
@@ -114,6 +115,7 @@ void ShortestJobFirst(std::vector<Process> processes, int switchTime, double lam
                 int oldTau = processes[current].getTau();
                 int newTau = std::ceil((alpha * burstTime) + ((1 - alpha) * oldTau));
                 processes[current].setTau(newTau);
+                processes[current].setPredictedRemaining(newTau);
 
                 if (currentTime <= 9999) {
                     std::cout << "time " << currentTime << "ms: Recalculated tau for process " << processes[current].getId() 
