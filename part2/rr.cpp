@@ -9,10 +9,32 @@
 
 using namespace std;
 
-extern string printQueue(queue<Process> q);
+class Compare {
+public:
+    bool operator()(Process below, Process above) {
+        if (below.getTimeAdded() > above.getTimeAdded()) {
+            return true;
+        }
+        return false;
+    }
+};
+
+string printQueue(priority_queue<Process, vector<Process>, Compare> q) {
+    std::string result = "[Q";
+    if (q.empty()) {
+        result.append(" empty");
+    } else {
+        while (!q.empty()) {
+            result.append(" ").append(q.top().getId());
+            q.pop();
+        }
+    }
+    result.append("]");
+    return result;
+}
 
 int rr(vector<Process> allP, int switchTime, int slice) {
-    queue<Process> q;
+    priority_queue<Process, vector<Process>, Compare> q;
     int time = 0;
     cout << "time " << time << "ms: Simulator started for RR " << printQueue(q) << endl;
 
@@ -32,7 +54,7 @@ int rr(vector<Process> allP, int switchTime, int slice) {
             if (preemptTime == -1 || cpuCompleteTime == -1) {
                 cerr << "ERROR: Preempt time and Complete time both -1" << endl;
                 return -1;
-            } else if (cpuCompleteTime < preemptTime) {
+            } else if (cpuCompleteTime <= preemptTime) {
                 isCpuComplete = true;
             } else {
                 isPreemption = true;
@@ -113,8 +135,9 @@ int rr(vector<Process> allP, int switchTime, int slice) {
                 preemptTime = time + slice;
             } else {
                 if (time < 10000) cout << "time " << time << "ms: Time slice expired; preempting process " << allP[current].getId() << " with " << allP[current].getRemaining() << "ms remaining " << printQueue(q) << endl;
-                q.push(allP[current]);
                 time += switchTime/2;
+                allP[current].setTimeAdded(time);
+                q.push(allP[current]);
                 allP[current].setWaiting(time);
                 if (allP[current].isCpuBound()) {
                     cpuPreemptions++;
@@ -132,7 +155,7 @@ int rr(vector<Process> allP, int switchTime, int slice) {
 
         } else if (canStartCpu && cpuStartTime <= blockingTime && cpuStartTime <= newArrivalTime) { //start next cpu burst
             for (unsigned int j = 0; j < allP.size(); j++) {
-                if (allP[j].getId().compare(q.front().getId()) == 0) {
+                if (allP[j].getId().compare(q.top().getId()) == 0) {
                     current = j;
                     break;
                 }
@@ -166,6 +189,7 @@ int rr(vector<Process> allP, int switchTime, int slice) {
             for (unsigned int j = 0; j < allP.size(); j++) {
                 if (allP[j].getBlocking() == time) {
                     allP[j].setBlocking(-1);
+                    allP[j].setTimeAdded(time);
                     q.push(allP[j]);
                     if (time < 10000) cout << "time " << time << "ms: Process " << allP[j].getId() << " completed I/O; added to ready queue " << printQueue(q) << endl;
                     allP[j].setWaiting(time);

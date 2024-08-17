@@ -55,6 +55,10 @@ bool checkArgs(char* argv[], int n, int nCPU, unsigned int seed, double lambda, 
     return true;
 }
 
+bool sortProcesses(Process p1, Process p2) {
+    return p1.getArrivalTime() < p2.getArrivalTime();
+}
+
 int main(int argc, char *argv[]) {
     //error check
     if (argc != 9) {
@@ -178,6 +182,9 @@ int main(int argc, char *argv[]) {
      * PART 2 STARTS HERE
      * 
      */
+
+    //sort allP
+    sort(allP.begin(), allP.end(), sortProcesses);
 
     printf("\n<<< PROJECT PART II\n");
     printf("<<< -- t_cs=%dms; alpha=%.2f; t_slice=%dms\n", switchTime, alpha, slice);

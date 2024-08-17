@@ -128,7 +128,7 @@ void ShortestJobFirst(std::vector<Process> processes, int switchTime, double lam
                 if (currentTime <= 9999) {
                     std::cout << "time " << currentTime << "ms: Process " << processes[current].getId() << " terminated " << printQueue(SJFqueue) << std::endl;
                 } else {
-                    std::cout << "time " << currentTime << "ms: Process " << processes[current].getId() << " terminated [Q empty]" << std::endl;
+                    std::cout << "time " << currentTime << "ms: Process " << processes[current].getId() << " terminated " << printQueue(SJFqueue) << std::endl;
                 }
                 processes.erase(processes.begin() + current);
             }
@@ -191,7 +191,7 @@ void ShortestJobFirst(std::vector<Process> processes, int switchTime, double lam
         if (currentTime >= 10000) {
             finalTime = processes[0].getArrivalTime();
         }
-        std::cout << "time " << finalTime << "ms: Process " << processes[0].getId() << " terminated [Q empty]" << std::endl;
+        std::cout << "time " << finalTime << "ms: Process " << processes[0].getId() << " terminated " << printQueue(SJFqueue) << std::endl;
         processes.erase(processes.begin());
     }
 

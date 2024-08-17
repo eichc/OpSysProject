@@ -64,6 +64,9 @@ public:
     void setPredictedRemaining(int time);
     int getPredictedRemaining() const;
 
+    void setTimeAdded(int time);
+    int getTimeAdded() const;
+
 private:
     std::string pID_;
     int arrivalTime_;
@@ -74,6 +77,7 @@ private:
     int waiting; //time entered into waiting queue
     int burstStart;
     int predictedRemaining;
+    int timeAdded;
 
     int tau_;  // New tau variable
 

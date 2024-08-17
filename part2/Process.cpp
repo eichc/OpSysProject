@@ -1,10 +1,10 @@
 #include "Process.h"
 
 Process::Process()
-    : pID_(""), arrivalTime_(0), numBursts_(0), cpuBound_(false), blocking(-1), remaining(-1), waiting(-1), burstStart(-1), predictedRemaining(-1) {}
+    : pID_(""), arrivalTime_(0), numBursts_(0), cpuBound_(false), blocking(-1), remaining(-1), waiting(-1), burstStart(-1), predictedRemaining(-1), timeAdded(0) {}
 
 Process::Process(std::string pID, int arrivalTime, int numBursts, bool cpuBound)
-    : pID_(pID), arrivalTime_(arrivalTime), numBursts_(numBursts), cpuBound_(cpuBound), blocking(-1), remaining(-1), waiting(-1), burstStart(-1), predictedRemaining(-1) {}
+    : pID_(pID), arrivalTime_(arrivalTime), numBursts_(numBursts), cpuBound_(cpuBound), blocking(-1), remaining(-1), waiting(-1), burstStart(-1), predictedRemaining(-1), timeAdded(arrivalTime) {}
 
 // Getters
 std::string Process::getId() const {
@@ -104,7 +104,11 @@ void Process::outputProcess() {
     } else {
         std::cout << "I/O-bound process ";
     }
-    std::cout <<pID_<<": arrival time "<<arrivalTime_<<"ms; "<<numBursts_ << " CPU bursts\n";
+    if (numBursts_ == 1) {
+        std::cout <<pID_<<": arrival time "<<arrivalTime_<<"ms; "<<numBursts_ << " CPU burst\n";
+    } else {
+        std::cout <<pID_<<": arrival time "<<arrivalTime_<<"ms; "<<numBursts_ << " CPU bursts\n";
+    }
 }
 
 void Process::setBlocking(int time) {
@@ -154,6 +158,14 @@ void Process::setPredictedRemaining(int time) {
 
 int Process::getPredictedRemaining() const {
     return predictedRemaining;
+}
+
+void Process::setTimeAdded(int time) {
+    timeAdded = time;
+}
+
+int Process::getTimeAdded() const {
+    return timeAdded;
 }
 
 bool operator<(const Process& lhs, const Process& rhs) {
