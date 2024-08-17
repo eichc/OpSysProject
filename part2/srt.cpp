@@ -26,6 +26,8 @@ void srt(std::vector<Process> processes, int switchTime, double lambda, double a
     int cpuSwitches = 0, ioSwitches = 0;
     int numCpuBoundBursts = 0, numIoBoundBursts = 0;
     double cpuBusyTime = 0; 
+    int cpuPreemption=0;
+    int ioPreemption=0;
 
     std::cout << "time 0ms: Simulator started for SRT [Q empty]" << std::endl;
 
@@ -182,6 +184,11 @@ void srt(std::vector<Process> processes, int switchTime, double lambda, double a
                         processes[current].setWaiting(currentTime);
                         current = -1;
                         cpuCompleteTime = INT_MAX;
+                        if (processes[current].isCpuBound()) {
+                            ioPreemption++;
+                        } else {
+                            cpuPreemption++;
+                        }
                     } else { //no preemption
                         //if (currentTime <= 9999) {
                             std::cout << "time " << currentTime << "ms: Process " << processes[j].getId() <<" (tau " << processes[j].getTau() << "ms) completed I/O; added to ready queue " << printQueue(SRTqueue) << std::endl;
@@ -240,7 +247,7 @@ void srt(std::vector<Process> processes, int switchTime, double lambda, double a
         totalAvgWait = ceil(((cpuBoundWaitTime + ioBoundWaitTime) / (numCpuBoundBursts + numIoBoundBursts)) * 1000) / 1000;
         totalAvgTurn = ceil((((cpuBoundWaitTime + cpuBoundBurstTime + (cpuSwitches * switchTime)) + (ioBoundWaitTime + ioBoundBurstTime + (ioSwitches * switchTime))) / (numCpuBoundBursts + numIoBoundBursts)) * 1000) / 1000;
     }
-
+    
     fprintf(fp, "\nAlgorithm SRT\n");
     fprintf(fp, "-- CPU utilization: %.3f%%\n", utilization);
     fprintf(fp, "-- CPU-bound average wait time: %.3f ms\n", cpuBoundAvgWait);
@@ -252,9 +259,9 @@ void srt(std::vector<Process> processes, int switchTime, double lambda, double a
     fprintf(fp, "-- CPU-bound number of context switches: %d\n", cpuSwitches);
     fprintf(fp, "-- I/O-bound number of context switches: %d\n", ioSwitches);
     fprintf(fp, "-- overall number of context switches: %d\n", cpuSwitches + ioSwitches);
-    fprintf(fp, "-- CPU-bound number of preemptions: 0\n");
-    fprintf(fp, "-- I/O-bound number of preemptions: 0\n");
-    fprintf(fp, "-- overall number of preemptions: 0\n");
+    fprintf(fp, "-- CPU-bound number of preemptions: %d\n", cpuPreemption); // Ensure you count preemptions accurately
+    fprintf(fp, "-- I/O-bound number of preemptions: %d\n", ioPreemption); // Ensure you count preemptions accurately
+    fprintf(fp, "-- overall number of preemptions: %d\n", cpuPreemption + ioPreemption); // Ensure you count preemptions accurately
 
     fclose(fp);
 }
