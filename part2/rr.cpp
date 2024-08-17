@@ -107,12 +107,30 @@ int rr(vector<Process> allP, int switchTime, int slice) {
                 allP.erase(itr);
             } else {
                 if (allP[current].getNumCPU() == 1) {
-                    if (time < 10000) cout << "time " << time << "ms: Process " << allP[current].getId() << " completed a CPU burst; " << allP[current].getNumCPU() << " burst to go " << printQueue(q) << endl;
+                    #ifndef DEBUG_MODE_RR
+                    if (time < 10000) {
+                    #endif
+                        cout << "time " << time << "ms: Process " << allP[current].getId() << " completed a CPU burst; " << allP[current].getNumCPU() << " burst to go " << printQueue(q) << endl;
+                    #ifndef DEBUG_MODE_RR
+                    }
+                    #endif
                 } else {
-                    if (time < 10000) cout << "time " << time << "ms: Process " << allP[current].getId() << " completed a CPU burst; " << allP[current].getNumCPU() << " bursts to go " << printQueue(q) << endl;
+                    #ifndef DEBUG_MODE_RR
+                    if (time < 10000) {
+                    #endif
+                        cout << "time " << time << "ms: Process " << allP[current].getId() << " completed a CPU burst; " << allP[current].getNumCPU() << " bursts to go " << printQueue(q) << endl;
+                    #ifndef DEBUG_MODE_RR
+                    }
+                    #endif
                 }
                 allP[current].setBlocking(time + allP[current].popFrontIO() + switchTime/2);
-                if (time < 10000) cout << "time " << time << "ms: Process " << allP[current].getId() << " switching out of CPU; blocking on I/O until time " << allP[current].getBlocking() << "ms " << printQueue(q) << endl;
+                #ifndef DEBUG_MODE_RR
+                if (time < 10000) {
+                #endif
+                     cout << "time " << time << "ms: Process " << allP[current].getId() << " switching out of CPU; blocking on I/O until time " << allP[current].getBlocking() << "ms " << printQueue(q) << endl;
+                #ifndef DEBUG_MODE_RR
+                }
+                #endif
             }
             time += switchTime/2;
             current = -1;
@@ -131,10 +149,22 @@ int rr(vector<Process> allP, int switchTime, int slice) {
                 allP[current].setRemaining(allP[current].getRemaining() - slice);
             }
             if (q.empty()) {
-                if (time < 10000) cout << "time " << time << "ms: Time slice expired; no preemption because ready queue is empty " << printQueue(q) << endl;
+                #ifndef DEBUG_MODE_RR
+                if (time < 10000) {
+                #endif
+                    cout << "time " << time << "ms: Time slice expired; no preemption because ready queue is empty " << printQueue(q) << endl;
+                #ifndef DEBUG_MODE_RR
+                }
+                #endif
                 preemptTime = time + slice;
             } else {
-                if (time < 10000) cout << "time " << time << "ms: Time slice expired; preempting process " << allP[current].getId() << " with " << allP[current].getRemaining() << "ms remaining " << printQueue(q) << endl;
+                #ifndef DEBUG_MODE_RR
+                if (time < 10000) {
+                #endif
+                    cout << "time " << time << "ms: Time slice expired; preempting process " << allP[current].getId() << " with " << allP[current].getRemaining() << "ms remaining " << printQueue(q) << endl;
+                #ifndef DEBUG_MODE_RR
+                }
+                #endif
                 time += switchTime/2;
                 allP[current].setTimeAdded(time);
                 q.push(allP[current]);
@@ -176,10 +206,22 @@ int rr(vector<Process> allP, int switchTime, int slice) {
             int temp;
             if (allP[current].getRemaining() != -1) {
                 temp = allP[current].getRemaining();
-                if (time < 10000) cout << "time " << time << "ms: Process " << allP[current].getId() << " started using the CPU for remaining " << temp << "ms of " << allP[current].getFrontCPU() << "ms burst " << printQueue(q) << endl;
+                #ifndef DEBUG_MODE_RR
+                if (time < 10000) {
+                #endif
+                    cout << "time " << time << "ms: Process " << allP[current].getId() << " started using the CPU for remaining " << temp << "ms of " << allP[current].getFrontCPU() << "ms burst " << printQueue(q) << endl;
+                #ifndef DEBUG_MODE_RR
+                }
+                #endif
             } else {
                 temp = allP[current].getFrontCPU();
-                if (time < 10000) cout << "time " << time << "ms: Process " << allP[current].getId() << " started using the CPU for " << temp << "ms burst " << printQueue(q) << endl;
+                #ifndef DEBUG_MODE_RR
+                if (time < 10000) {
+                #endif
+                    cout << "time " << time << "ms: Process " << allP[current].getId() << " started using the CPU for " << temp << "ms burst " << printQueue(q) << endl;
+                #ifndef DEBUG_MODE_RR
+                }
+                #endif
             }
             preemptTime = time + slice;
             cpuCompleteTime = time + temp;
@@ -191,7 +233,13 @@ int rr(vector<Process> allP, int switchTime, int slice) {
                     allP[j].setBlocking(-1);
                     allP[j].setTimeAdded(time);
                     q.push(allP[j]);
-                    if (time < 10000) cout << "time " << time << "ms: Process " << allP[j].getId() << " completed I/O; added to ready queue " << printQueue(q) << endl;
+                    #ifndef DEBUG_MODE_RR
+                    if (time < 10000) {
+                    #endif
+                        cout << "time " << time << "ms: Process " << allP[j].getId() << " completed I/O; added to ready queue " << printQueue(q) << endl;
+                    #ifndef DEBUG_MODE_RR
+                    }
+                    #endif
                     allP[j].setWaiting(time);
                     break;
                 }
@@ -200,7 +248,13 @@ int rr(vector<Process> allP, int switchTime, int slice) {
         } else { //new process arrives
             q.push(allP[i]);
             time = allP[i].getArrivalTime();
-            if (time < 10000) cout << "time " << time << "ms: Process " << allP[i].getId() << " arrived; added to ready queue " << printQueue(q) << endl;
+            #ifndef DEBUG_MODE_RR
+            if (time < 10000) {
+            #endif
+                cout << "time " << time << "ms: Process " << allP[i].getId() << " arrived; added to ready queue " << printQueue(q) << endl;
+            #ifndef DEBUG_MODE_RR
+            }
+            #endif
             allP[i].setWaiting(time);
             i++;
         }

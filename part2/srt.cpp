@@ -49,7 +49,7 @@ void srt(std::vector<Process> processes, int switchTime, double lambda, double a
             isCpuComplete = true;
         } else if (!SRTqueue.empty()) {  // Start using CPU
             canStartCpu = true;
-            cpuStartTime = nextStartTime;
+            cpuStartTime = std::max(currentTime, nextStartTime);
         }
 
         // I/O burst completion
@@ -94,30 +94,41 @@ void srt(std::vector<Process> processes, int switchTime, double lambda, double a
             }
 
             processes[current].setRemaining(-1);
-            processes[current].setPredictedRemaining(-1);
             if (!processes[current].isEmptyCPU()) {
+                #ifndef DEBUG_MODE_SRT
                 if (currentTime <= 9999) {
+                #endif
                     if (processes[current].getNumCPU() == 1) {
                         std::cout << "time " << currentTime << "ms: Process " << processes[current].getId() << " (tau " << processes[current].getTau() << "ms) completed a CPU burst; " << processes[current].getNumCPU() << " burst to go " << printQueue(SRTqueue) << std::endl;
                     } else {
                         std::cout << "time " << currentTime << "ms: Process " << processes[current].getId() << " (tau " << processes[current].getTau() << "ms) completed a CPU burst; " << processes[current].getNumCPU() << " bursts to go " << printQueue(SRTqueue) << std::endl;
                     }
+                #ifndef DEBUG_MODE_SRT
                 }
+                #endif
 
                 int oldTau = processes[current].getTau();
                 int newTau = std::ceil((alpha * burstTime) + ((1 - alpha) * oldTau));
                 processes[current].setTau(newTau);
                 processes[current].setPredictedRemaining(newTau);
 
+                #ifndef DEBUG_MODE_SRT
                 if (currentTime <= 9999) {
+                #endif
                     std::cout << "time " << currentTime << "ms: Recalculated tau for process " << processes[current].getId() 
                               << ": old tau " << oldTau << "ms ==> new tau " << newTau << "ms " << printQueue(SRTqueue) << std::endl;
+                #ifndef DEBUG_MODE_SRT
                 }
+                #endif
 
                 processes[current].setBlocking(currentTime + processes[current].popFrontIO() + switchTime / 2);
+                #ifndef DEBUG_MODE_SRT
                 if (currentTime <= 9999) {
+                #endif
                     std::cout << "time " << currentTime << "ms: Process " << processes[current].getId() << " switching out of CPU; blocking on I/O until time " << processes[current].getBlocking() << "ms " << printQueue(SRTqueue) << std::endl;
+                #ifndef DEBUG_MODE_SRT
                 }
+                #endif
             } else {
                 std::cout << "time " << currentTime << "ms: Process " << processes[current].getId() << " terminated " << printQueue(SRTqueue) << std::endl;
                 processes.erase(processes.begin() + current);
@@ -126,11 +137,11 @@ void srt(std::vector<Process> processes, int switchTime, double lambda, double a
             currentTime += switchTime / 2;
             current = -1;
             cpuCompleteTime = INT_MAX;
-            if (!SRTqueue.empty()) {
+            //if (!SRTqueue.empty()) {
                 nextStartTime = currentTime + switchTime/2;
-            } else {
-                nextStartTime = -1;
-            }
+            //} else {
+            //    nextStartTime = -1;
+            //}
 
         } else if (canStartCpu && std::min(cpuStartTime, blockingTime) == std::min(cpuStartTime, newArrivalTime)) { // Start next CPU burst
             for (unsigned int j = 0; j < processes.size(); j++) {
@@ -140,7 +151,7 @@ void srt(std::vector<Process> processes, int switchTime, double lambda, double a
                 }
             }
             SRTqueue.pop();
-            if (nextStartTime == -1) {
+            if (nextStartTime < currentTime) {
                 currentTime += switchTime/2;
             } else {
                 currentTime = nextStartTime;
@@ -158,14 +169,22 @@ void srt(std::vector<Process> processes, int switchTime, double lambda, double a
             
                 if (processes[current].getRemaining() != -1) {
                     temp = processes[current].getRemaining();
+                    #ifndef DEBUG_MODE_SRT
                     if (currentTime <= 9999) {
+                    #endif
                         std::cout << "time " << currentTime << "ms: Process " << processes[current].getId() << " (tau " << processes[current].getTau() << "ms) started using the CPU for remaining " << temp << "ms of " << processes[current].getFrontCPU() << "ms burst " << printQueue(SRTqueue) << std::endl;
+                    #ifndef DEBUG_MODE_SRT
                     }
+                    #endif
                 } else {
                     temp = processes[current].getFrontCPU();
+                    #ifndef DEBUG_MODE_SRT
                     if (currentTime <= 9999) {
+                    #endif
                         std::cout << "time " << currentTime << "ms: Process " << processes[current].getId() << " (tau " << processes[current].getTau() << "ms) started using the CPU for " << temp << "ms burst " << printQueue(SRTqueue) << std::endl;
+                    #ifndef DEBUG_MODE_SRT
                     }
+                    #endif
                 }
             cpuCompleteTime = currentTime + temp;
         } else if (blockingTime < newArrivalTime) { // Complete the I/O burst
@@ -179,20 +198,28 @@ void srt(std::vector<Process> processes, int switchTime, double lambda, double a
                     if (current != -1 && processes[j].getTau() < processes[current].getPredictedRemaining() - (currentTime - processes[current].getStart())) {
                         int ran = currentTime - processes[current].getStart();
                         if (processes[current].getRemaining() == -1) {
+                            #ifndef DEBUG_MODE_SRT
                             if (currentTime <= 9999) {
+                            #endif
                                 std::cout << "time " << currentTime << "ms: Process " << processes[j].getId() <<" (tau " << processes[j].getTau() << "ms) completed I/O; preempting " << processes[current].getId() << " (predicted remaining time " << processes[current].getPredictedRemaining() - ran << "ms) " << printQueue(SRTqueue) << std::endl;
+                            #ifndef DEBUG_MODE_SRT
                             }
+                            #endif
                             processes[current].setRemaining(processes[current].getFrontCPU() - ran);
                             processes[current].setPredictedRemaining(processes[current].getTau() - ran);
                         } else {
+                            #ifndef DEBUG_MODE_SRT
                             if (currentTime <= 9999) {
+                            #endif
                                 std::cout << "time " << currentTime << "ms: Process " << processes[j].getId() <<" (tau " << processes[j].getTau() << "ms) completed I/O; preempting " << processes[current].getId() << " (predicted remaining time " << processes[current].getPredictedRemaining() - ran << "ms) " << printQueue(SRTqueue) << std::endl;
+                            #ifndef DEBUG_MODE_SRT
                             }
+                            #endif
                             processes[current].setPredictedRemaining(processes[current].getPredictedRemaining() - ran);
                             processes[current].setRemaining(processes[current].getRemaining() - ran);
                         }
-                        SRTqueue.push(processes[current]);
                         currentTime += switchTime/2;
+                        SRTqueue.push(processes[current]);
                         processes[current].setWaiting(currentTime);
                         if (processes[current].isCpuBound()) {
                             cpuPreemption++;
@@ -201,15 +228,20 @@ void srt(std::vector<Process> processes, int switchTime, double lambda, double a
                         }
                         current = -1;
                         cpuCompleteTime = INT_MAX;
-                        if (!SRTqueue.empty()) {
-                            nextStartTime = currentTime + switchTime/2;
-                        } else {
-                            nextStartTime = -1;
-                        }
+                        // if (!SRTqueue.empty()) {
+                             nextStartTime = currentTime + switchTime/2;
+                        // } else {
+                        //     nextStartTime = -1;
+                        // }
                     } else { //no preemption
+                        #ifndef DEBUG_MODE_SRT
                         if (currentTime <= 9999) {
+                        #endif
                             std::cout << "time " << currentTime << "ms: Process " << processes[j].getId() <<" (tau " << processes[j].getTau() << "ms) completed I/O; added to ready queue " << printQueue(SRTqueue) << std::endl;
+                        
+                        #ifndef DEBUG_MODE_SRT
                         }
+                        #endif
                     }
                     break;
                 }
@@ -218,9 +250,13 @@ void srt(std::vector<Process> processes, int switchTime, double lambda, double a
         } else { // New process arrives
             SRTqueue.push(processes[i]);
             currentTime = processes[i].getArrivalTime();
+            #ifndef DEBUG_MODE_SRT
             if (currentTime <= 9999) {
+            #endif
                 std::cout << "time " << currentTime << "ms: Process " << processes[i].getId() << " (tau " << processes[i].getTau() << "ms) arrived; added to ready queue " << printQueue(SRTqueue) << std::endl;
+            #ifndef DEBUG_MODE_SRT
             }
+            #endif
             processes[i].setWaiting(currentTime);
             i++;
         }
