@@ -185,9 +185,9 @@ void srt(std::vector<Process> processes, int switchTime, double lambda, double a
                         current = -1;
                         cpuCompleteTime = INT_MAX;
                         if (processes[current].isCpuBound()) {
-                            ioPreemption++;
-                        } else {
                             cpuPreemption++;
+                        } else {
+                            ioPreemption++;
                         }
                     } else { //no preemption
                         //if (currentTime <= 9999) {
