@@ -194,13 +194,13 @@ void srt(std::vector<Process> processes, int switchTime, double lambda, double a
                         SRTqueue.push(processes[current]);
                         currentTime += switchTime/2;
                         processes[current].setWaiting(currentTime);
-                        current = -1;
-                        cpuCompleteTime = INT_MAX;
                         if (processes[current].isCpuBound()) {
                             cpuPreemption++;
                         } else {
                             ioPreemption++;
                         }
+                        current = -1;
+                        cpuCompleteTime = INT_MAX;
                         if (!SRTqueue.empty()) {
                             nextStartTime = currentTime + switchTime/2;
                         } else {

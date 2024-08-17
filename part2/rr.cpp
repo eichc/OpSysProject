@@ -12,7 +12,7 @@ using namespace std;
 class Compare {
 public:
     bool operator()(Process below, Process above) {
-        if (below.getTimeAdded() > above.getTimeAdded()) {
+        if (below.getTimeAdded() >= above.getTimeAdded()) {
             return true;
         }
         return false;
