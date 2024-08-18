@@ -169,30 +169,11 @@ void ShortestJobFirst(std::vector<Process> processes, int switchTime, double lam
             }
 
         } else if (canStartCpu && cpuStartTime <= blockingTime && cpuStartTime <= newArrivalTime) { // Start next CPU burst
-            // for (unsigned int j = 0; j < processes.size(); j++) {
-            //     if (processes[j].getId().compare(SJFqueue.top().getId()) == 0) {
-            //         current = j;
-            //         break;
-            //     }
-            // }
-            // SJFqueue.pop();
-            // if (nextSwitchTime < currentTime) {
-            //     currentTime += switchTime/2;
-            // } else {
-            //     currentTime = nextSwitchTime;
-            // }
             currentTime = cpuStartTime;
             current = switchingIn;
             switchingIn = -1;
             int temp = processes[current].getFrontCPU();
             
-            // if (processes[current].isCpuBound()) {
-            //     cpuBoundWaitTime += (currentTime - processes[current].getWaiting() - switchTime / 2);
-            //     cpuSwitches++;
-            // } else {
-            //     ioBoundWaitTime += (currentTime - processes[current].getWaiting() - switchTime / 2);
-            //     ioSwitches++;
-            // }
             
             #ifndef DEBUG_MODE_SJF
             if (currentTime <= 9999) {

@@ -160,30 +160,11 @@ void srt(std::vector<Process> processes, int switchTime, double lambda, double a
             }
 
         } else if (canStartCpu && cpuStartTime <= blockingTime && cpuStartTime <= newArrivalTime) { // Start next CPU burst
-            // for (unsigned int j = 0; j < processes.size(); j++) {
-            //     if (processes[j].getId().compare(SRTqueue.top().getId()) == 0) {
-            //         current = j;
-            //         break;
-            //     }
-            // }
-            // SRTqueue.pop();
-            // if (nextSwitchTime < currentTime) {
-            //     currentTime += switchTime/2;
-            // } else {
-            //     currentTime = nextSwitchTime;
-            // }
             currentTime = cpuStartTime;
             current = switchingIn;
             switchingIn = -1;
             int temp;
             
-            // if (processes[current].isCpuBound()) {
-            //     cpuBoundWaitTime += (currentTime - processes[current].getWaiting() - switchTime / 2);
-            //     cpuSwitches++;
-            // } else {
-            //     ioBoundWaitTime += (currentTime - processes[current].getWaiting() - switchTime / 2);
-            //     ioSwitches++;
-            // }
             processes[current].setStart(currentTime);
             
                 if (processes[current].getRemaining() != -1) {

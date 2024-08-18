@@ -3,40 +3,15 @@
 #include <vector>
 #include <queue>
 #include <cmath>
-#include <cstdio>
+#include <fstream>
 #include <limits.h>
 #include "Process.h"
 
 using namespace std;
 
-class Compare {
-public:
-    bool operator()(Process below, Process above) {
-        if (below.getTimeAdded() >= above.getTimeAdded()) {
-            return true;
-        }
-        return false;
-    }
-};
-
-string printQueue(priority_queue<Process, vector<Process>, Compare> q) {
-    std::string result = "[Q";
-    if (q.empty()) {
-        result.append(" empty");
-    } else {
-        while (!q.empty()) {
-            result.append(" ").append(q.top().getId());
-            q.pop();
-        }
-    }
-    result.append("]");
-    return result;
-}
-
 extern string printQueue(queue<Process> q);
 
 int rr(vector<Process> allP, int switchTime, int slice) {
-    //priority_queue<Process, vector<Process>, Compare> q;
     queue<Process> q;
     int time = 0;
     cout << "time " << time << "ms: Simulator started for RR " << printQueue(q) << endl;
@@ -165,9 +140,7 @@ int rr(vector<Process> allP, int switchTime, int slice) {
                 #ifndef DEBUG_MODE_RR
                 }
                 #endif
-                allP[current].setTimeAdded(time);
-                // q.push(allP[current]);
-                // allP[current].setWaiting(time);
+
                 if (allP[current].isCpuBound()) {
                     cpuPreemptions++;
                 } else {
@@ -207,23 +180,10 @@ int rr(vector<Process> allP, int switchTime, int slice) {
             }
 
         } else if (canStartCpu && cpuStartTime <= blockingTime && cpuStartTime <= newArrivalTime) { //start next cpu burst
-            // for (unsigned int j = 0; j < allP.size(); j++) {
-            //     if (allP[j].getId().compare(q.top().getId()) == 0) {
-            //         current = j;
-            //         break;
-            //     }
-            // }
-            // q.pop();
             time = cpuStartTime;
             current = switchingIn;
             switchingIn = -1;
-            // if (allP[current].isCpuBound()) {
-            //     cpuBoundWaitTime += (time - allP[current].getWaiting() - switchTime/2);
-            //     cpuSwitches++;
-            // } else {
-            //     ioBoundWaitTime += (time - allP[current].getWaiting() - switchTime/2);
-            //     ioSwitches++;
-            // }
+
             int temp;
             if (allP[current].getRemaining() != -1) {
                 temp = allP[current].getRemaining();
@@ -259,7 +219,6 @@ int rr(vector<Process> allP, int switchTime, int slice) {
                 }
             }
             allP[selector].setBlocking(-1);
-            allP[selector].setTimeAdded(time);
             q.push(allP[selector]);
             #ifndef DEBUG_MODE_RR
             if (time < 10000) {
