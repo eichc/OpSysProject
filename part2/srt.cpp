@@ -157,9 +157,6 @@ void srt(std::vector<Process> processes, int switchTime, double lambda, double a
 
         } else if (canSwitchIn && cpuSwitchTime < blockingTime && cpuSwitchTime < newArrivalTime) { //switch into CPU
             currentTime = cpuSwitchTime;
-            if (switchingIn!=-1) {
-                std::cout << "time " << currentTime << "ms: Process " << processes[current].getId() << " (tau " << processes[current].getTau() << "ms) will preempt " << processes[current-1].getId() << " " << printQueue(SRTqueue) << std::endl;
-            }
             for (unsigned int j = 0; j < processes.size(); j++) {
                 if (processes[j].getId().compare(SRTqueue.top().getId()) == 0) {
                     switchingIn = j;
@@ -182,27 +179,43 @@ void srt(std::vector<Process> processes, int switchTime, double lambda, double a
             int temp;
             
             processes[current].setStart(currentTime);
-            
-                if (processes[current].getRemaining() != -1) {
-                    temp = processes[current].getRemaining();
-                    #ifndef DEBUG_MODE_SRT
-                    if (currentTime <= 9999) {
-                    #endif
-                        std::cout << "time " << currentTime << "ms: Process " << processes[current].getId() << " (tau " << processes[current].getTau() << "ms) started using the CPU for remaining " << temp << "ms of " << processes[current].getFrontCPU() << "ms burst " << printQueue(SRTqueue) << std::endl;
-                    #ifndef DEBUG_MODE_SRT
-                    }
-                    #endif
-                } else {
-                    temp = processes[current].getFrontCPU();
-                    #ifndef DEBUG_MODE_SRT
-                    if (currentTime <= 9999) {
-                    #endif
-                        std::cout << "time " << currentTime << "ms: Process " << processes[current].getId() << " (tau " << processes[current].getTau() << "ms) started using the CPU for " << temp << "ms burst " << printQueue(SRTqueue) << std::endl;
-                    #ifndef DEBUG_MODE_SRT
-                    }
-                    #endif
+            if (processes[current].getRemaining() != -1 && processes[current].getRemaining() != processes[current].getFrontCPU()) {
+                temp = processes[current].getRemaining();
+                #ifndef DEBUG_MODE_SRT
+                if (currentTime <= 9999) {
+                #endif
+                    std::cout << "time " << currentTime << "ms: Process " << processes[current].getId() << " (tau " << processes[current].getTau() << "ms) started using the CPU for remaining " << temp << "ms of " << processes[current].getFrontCPU() << "ms burst " << printQueue(SRTqueue) << std::endl;
+                #ifndef DEBUG_MODE_SRT
                 }
+                #endif
+            } else {
+                temp = processes[current].getFrontCPU();
+                #ifndef DEBUG_MODE_SRT
+                if (currentTime <= 9999) {
+                #endif
+                    std::cout << "time " << currentTime << "ms: Process " << processes[current].getId() << " (tau " << processes[current].getTau() << "ms) started using the CPU for " << temp << "ms burst " << printQueue(SRTqueue) << std::endl;
+                #ifndef DEBUG_MODE_SRT
+                }
+                #endif
+            }
             cpuCompleteTime = currentTime + temp;
+
+            if (SRTqueue.top().getTau() < processes[current].getPredictedRemaining()) { //check if instant preemption
+                #ifndef DEBUG_MODE_SRT
+                if (currentTime <= 9999) {
+                #endif
+                    std::cout << "time " << currentTime << "ms: Process " << SRTqueue.top().getId() << " (tau " << SRTqueue.top().getTau() << "ms) will preempt " << processes[current].getId() << " " << printQueue(SRTqueue) << std::endl;
+                #ifndef DEBUG_MODE_SRT
+                }
+                #endif
+                if (processes[current].isCpuBound()) {
+                    cpuPreemption++;
+                } else {
+                    ioPreemption++;
+                }
+                switchOutTime = currentTime + switchTime/2;
+                switchingOut = current;
+            }
         } else if (blockingTime < newArrivalTime) { // Complete the I/O burst
             currentTime = blockingTime;
             for (unsigned int j = 0; j < processes.size(); j++) {
