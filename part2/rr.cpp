@@ -284,8 +284,8 @@ int rr(vector<Process> allP, int switchTime, int slice) {
             i++;
         }
     }
-    
-    cout << "time " << time + switchTime/2 << "ms: Simulator ended for RR " << printQueue(q) << endl;
+    time+= switchTime/2;
+    cout << "time " << time << "ms: Simulator ended for RR " << printQueue(q) << endl;
 
     //simout
     FILE *fp;
