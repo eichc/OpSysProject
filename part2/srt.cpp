@@ -46,9 +46,10 @@ void srt(std::vector<Process> processes, int switchTime, double lambda, double a
 
         // CPU burst completion
         if (current != -1) {
-            isCpuComplete = true;
             if (switchingOut != -1) {
                 canSwitchOut = true;
+            } else {
+                isCpuComplete = true;
             }
         } else if (switchingIn != -1) { // Start using CPU
             canStartCpu = true;
@@ -72,7 +73,7 @@ void srt(std::vector<Process> processes, int switchTime, double lambda, double a
             isNewArrival = true;
         }
 
-        if (!isCpuComplete && !canStartCpu && !isIOComplete && !isNewArrival && !canSwitchIn) {
+        if (!isCpuComplete && !canStartCpu && !isIOComplete && !isNewArrival && !canSwitchIn && !canSwitchOut) {
             std::cerr << "ERROR: Nothing is able to be done\n";
             return;
         }
@@ -141,15 +142,12 @@ void srt(std::vector<Process> processes, int switchTime, double lambda, double a
             }
 
 
-            cpuCompleteTime = INT_MAX;
             switchOutTime = currentTime + switchTime/2;
-            current=-1;
+            switchingOut = current;
 
         } else if (canSwitchOut && switchOutTime <= blockingTime && switchOutTime <= newArrivalTime) { //Switch out of CPU
             currentTime = switchOutTime;
-            if (currentTime == cpuCompleteTime + switchTime/2) { //cpu completed
-                ;
-            } else { //was preempted
+            if (currentTime != cpuCompleteTime + switchTime/2) { //if was preempted
                 SRTqueue.push(processes[current]);
                 processes[current].setWaiting(currentTime);
             }
@@ -236,17 +234,13 @@ void srt(std::vector<Process> processes, int switchTime, double lambda, double a
                             processes[current].setPredictedRemaining(processes[current].getPredictedRemaining() - ran);
                             processes[current].setRemaining(processes[current].getRemaining() - ran);
                         }
-                        currentTime += switchTime/2;
-                        SRTqueue.push(processes[current]);
-                        processes[current].setWaiting(currentTime);
                         if (processes[current].isCpuBound()) {
                             cpuPreemption++;
                         } else {
                             ioPreemption++;
                         }
-                        current = -1;
-                        cpuCompleteTime = INT_MAX;
-                        switchOutTime = currentTime;
+                        switchingOut = current;
+                        switchOutTime = currentTime + switchTime/2;
                     } else { //no preemption
                         #ifndef DEBUG_MODE_SRT
                         if (currentTime <= 9999) {
@@ -286,6 +280,7 @@ void srt(std::vector<Process> processes, int switchTime, double lambda, double a
         processes.erase(processes.begin());
     }
 
+    currentTime += switchTime/2;
     std::cout << "time " << currentTime << "ms: Simulator ended for SRT [Q empty]" << std::endl;
 
     FILE *fp;
