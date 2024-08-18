@@ -16,8 +16,8 @@ void srt(std::vector<Process> processes, int switchTime, double lambda, double a
     int current = -1; 
     int cpuCompleteTime = INT_MAX;
     unsigned int i = 0;
-    int blockingTime, cpuStartTime, newArrivalTime, nextSwitchTime = -1, switchingIn = -1, cpuSwitchTime = 0;
-    bool isCpuComplete, canStartCpu, isIOComplete, isNewArrival, canSwitchIn;
+    int switchOutTime=0, switchingOut = -1, blockingTime, cpuStartTime, newArrivalTime, switchingIn = -1, cpuSwitchTime = 0;
+    bool isCpuComplete, canStartCpu, isIOComplete, isNewArrival, canSwitchIn, canSwitchOut;
 
     // Variables to track statistics
     double cpuBoundWaitTime = 0, ioBoundWaitTime = 0;
@@ -42,17 +42,20 @@ void srt(std::vector<Process> processes, int switchTime, double lambda, double a
 
     while (!processes.empty()) {
         blockingTime = newArrivalTime = INT_MAX;
-        isCpuComplete = canStartCpu = isIOComplete = isNewArrival = canSwitchIn = false;
+        isCpuComplete = canStartCpu = isIOComplete = isNewArrival = canSwitchIn = canSwitchOut = false;
 
         // CPU burst completion
         if (current != -1) {
             isCpuComplete = true;
+            if (switchingOut != -1) {
+                canSwitchOut = true;
+            }
         } else if (switchingIn != -1) { // Start using CPU
             canStartCpu = true;
             cpuStartTime = cpuSwitchTime + switchTime/2;
         } else if (!SRTqueue.empty()) { // Switch into CPU
             canSwitchIn = true;
-            cpuSwitchTime = std::max(currentTime, nextSwitchTime);
+            cpuSwitchTime = std::max(currentTime, switchOutTime);
         }
 
         // I/O burst completion
@@ -137,13 +140,28 @@ void srt(std::vector<Process> processes, int switchTime, double lambda, double a
                 processes.erase(processes.begin() + current);
             }
 
-            currentTime += switchTime / 2;
-            current = -1;
+
             cpuCompleteTime = INT_MAX;
-            nextSwitchTime = currentTime;
+            switchOutTime = currentTime + switchTime/2;
+            current=-1;
+
+        } else if (canSwitchOut && switchOutTime <= blockingTime && switchOutTime <= newArrivalTime) { //Switch out of CPU
+            currentTime = switchOutTime;
+            if (currentTime == cpuCompleteTime + switchTime/2) { //cpu completed
+                ;
+            } else { //was preempted
+                SRTqueue.push(processes[current]);
+                processes[current].setWaiting(currentTime);
+            }
+            current = -1;
+            switchingOut = -1;
+            cpuCompleteTime = INT_MAX;
 
         } else if (canSwitchIn && cpuSwitchTime < blockingTime && cpuSwitchTime < newArrivalTime) { //switch into CPU
             currentTime = cpuSwitchTime;
+            if (switchingIn!=-1) {
+                std::cout << "time " << currentTime << "ms: Process " << processes[current].getId() << " (tau " << processes[current].getTau() << "ms) will preempt " << processes[current-1].getId() << " " << printQueue(SRTqueue) << std::endl;
+            }
             for (unsigned int j = 0; j < processes.size(); j++) {
                 if (processes[j].getId().compare(SRTqueue.top().getId()) == 0) {
                     switchingIn = j;
@@ -228,7 +246,7 @@ void srt(std::vector<Process> processes, int switchTime, double lambda, double a
                         }
                         current = -1;
                         cpuCompleteTime = INT_MAX;
-                        nextSwitchTime = currentTime;
+                        switchOutTime = currentTime;
                     } else { //no preemption
                         #ifndef DEBUG_MODE_SRT
                         if (currentTime <= 9999) {
