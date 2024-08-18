@@ -152,9 +152,7 @@ int rr(vector<Process> allP, int switchTime, int slice) {
 
         } else if (canSwitchOut && switchOutTime <= blockingTime && switchOutTime <= newArrivalTime) { //Switch out of CPU
             time = switchOutTime;
-            if (time == cpuCompleteTime + switchTime/2) { //cpu completed
-                ;
-            } else { //was preempted
+            if (time != cpuCompleteTime + switchTime/2) { //if was preempted
                 q.push(allP[current]);
                 allP[current].setWaiting(time);
             }

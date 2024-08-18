@@ -1,6 +1,6 @@
 #include <string>
-#include <iostream>
 #include <algorithm>
+#include <iostream>
 #include <fstream>
 #include <vector>
 #include <queue>
@@ -36,20 +36,25 @@ int fcfs(vector<Process> allP, int switchTime) {
 
     int current = -1;
     unsigned int i = 0;
-    int cpuCompleteTime, newArrivalTime, blockingTime, cpuStartTime, nextSwitchTime = -1, switchingIn = -1, cpuSwitchTime = 0;
-    bool isCpuComplete, canStartCpu, isIOComplete, isNewArrival, canSwitchIn;
+    int cpuCompleteTime, newArrivalTime, blockingTime, cpuStartTime, switchingIn = -1, cpuSwitchTime = 0;
+    int switchingOut = -1, switchOutTime = 0;
+    bool isCpuComplete, canStartCpu, isIOComplete, isNewArrival, canSwitchIn, canSwitchOut;
     while (!allP.empty()) {
         blockingTime = newArrivalTime = INT_MAX;
-        isCpuComplete = canStartCpu = isIOComplete = isNewArrival = canSwitchIn = false;
+        isCpuComplete = canStartCpu = isIOComplete = isNewArrival = canSwitchIn = canSwitchOut = false;
         // CPU burst completion
         if (current != -1) {
-            isCpuComplete = true;
+            if (switchingOut != -1) {
+                canSwitchOut = true;
+            } else {
+                isCpuComplete = true;
+            }
         } else if (switchingIn != -1) { // Start using CPU
             canStartCpu = true;
             cpuStartTime = cpuSwitchTime + switchTime/2;
         } else if (!q.empty()) { // Switch into CPU
             canSwitchIn = true;
-            cpuSwitchTime = max(time, nextSwitchTime);
+            cpuSwitchTime = max(time, switchOutTime);
         }
 
         //IO burst completion
@@ -65,7 +70,7 @@ int fcfs(vector<Process> allP, int switchTime) {
             isNewArrival = true;
         }
 
-        if (!isCpuComplete && !canStartCpu && !isIOComplete && !isNewArrival && !canSwitchIn) {
+        if (!isCpuComplete && !canStartCpu && !isIOComplete && !isNewArrival && !canSwitchIn && !canSwitchOut) {
             cerr << "ERROR: Nothing is able to be done\n";
             return -1;
         }
@@ -96,11 +101,15 @@ int fcfs(vector<Process> allP, int switchTime) {
                 allP[current].setBlocking(time + allP[current].popFrontIO() + switchTime/2);
                 if (time < 10000) cout << "time " << time << "ms: Process " << allP[current].getId() << " switching out of CPU; blocking on I/O until time " << allP[current].getBlocking() << "ms " << printQueue(q) << endl;
             }
-            time += switchTime/2;
-            current = -1;
-            cpuCompleteTime = INT_MAX;
-            nextSwitchTime = time;
+            switchOutTime = time + switchTime/2;
+            switchingOut = current;
             
+        } else if (canSwitchOut && switchOutTime <= blockingTime && switchOutTime <= newArrivalTime) { //switch out of cpu
+            time = switchOutTime;
+            current = -1;
+            switchingOut = -1;
+            cpuCompleteTime = INT_MAX;
+
         } else if (canSwitchIn && cpuSwitchTime < blockingTime && cpuSwitchTime < newArrivalTime) { //switch into cpu
             time = cpuSwitchTime;
             for (unsigned int j = 0; j < allP.size(); j++) {
@@ -119,23 +128,10 @@ int fcfs(vector<Process> allP, int switchTime) {
             }
 
         } else if (canStartCpu && cpuStartTime <= blockingTime && cpuStartTime <= newArrivalTime) { //start next cpu burst
-            // for (unsigned int j = 0; j < allP.size(); j++) {
-            //     if (allP[j].getId().compare(q.front().getId()) == 0) {
-            //         current = j;
-            //         break;
-            //     }
-            // }
-            // q.pop();
             time = cpuStartTime;
             current = switchingIn;
             switchingIn = -1;
-            // if (allP[current].isCpuBound()) {
-            //     cpuBoundWaitTime += (time - allP[current].getWaiting() - switchTime/2);
-            //     cpuSwitches++;
-            // } else {
-            //     ioBoundWaitTime += (time - allP[current].getWaiting() - switchTime/2);
-            //     ioSwitches++;
-            // }
+
             int temp = allP[current].getFrontCPU();
             if (time < 10000) cout << "time " << time << "ms: Process " << allP[current].getId() << " started using the CPU for " << temp << "ms burst " << printQueue(q) << endl;
             cpuCompleteTime = time + temp;
@@ -171,6 +167,7 @@ int fcfs(vector<Process> allP, int switchTime) {
         }
     }
     
+    time += switchTime/2;
     cout << "time " << time << "ms: Simulator ended for FCFS " << printQueue(q) << endl;
 
     //simout

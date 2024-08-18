@@ -28,8 +28,9 @@ void ShortestJobFirst(std::vector<Process> processes, int switchTime, double lam
     int current = -1; 
     int cpuCompleteTime = INT_MAX;
     unsigned int i = 0;
-    int blockingTime, cpuSwitchTime = 0, newArrivalTime, nextSwitchTime = -1, switchingIn = -1, cpuStartTime;
-    bool isCpuComplete, canStartCpu, isIOComplete, isNewArrival, canSwitchIn;
+    int blockingTime, cpuSwitchTime = 0, newArrivalTime, switchingIn = -1, cpuStartTime;
+    int switchingOut = -1, switchOutTime = 0;
+    bool isCpuComplete, canStartCpu, isIOComplete, isNewArrival, canSwitchIn, canSwitchOut;
 
     // Variables to track statistics
     double cpuBoundWaitTime = 0, ioBoundWaitTime = 0;
@@ -52,17 +53,21 @@ void ShortestJobFirst(std::vector<Process> processes, int switchTime, double lam
 
     while (!processes.empty()) {
         blockingTime = newArrivalTime = INT_MAX;
-        isCpuComplete = canStartCpu = isIOComplete = isNewArrival = canSwitchIn = false;
+        isCpuComplete = canStartCpu = isIOComplete = isNewArrival = canSwitchIn = canSwitchOut = false;
 
         // CPU burst completion
         if (current != -1) {
-            isCpuComplete = true;
+            if (switchingOut != -1) {
+                canSwitchOut = true;
+            } else {
+                isCpuComplete = true;
+            }
         } else if (switchingIn != -1) { // Start using CPU
             canStartCpu = true;
             cpuStartTime = cpuSwitchTime + switchTime/2;
         } else if (!SJFqueue.empty()) { // Switch into CPU
             canSwitchIn = true;
-            cpuSwitchTime = std::max(currentTime, nextSwitchTime);
+            cpuSwitchTime = std::max(currentTime, switchOutTime);
         }
 
         // I/O burst completion
@@ -79,7 +84,7 @@ void ShortestJobFirst(std::vector<Process> processes, int switchTime, double lam
             isNewArrival = true;
         }
 
-        if (!isCpuComplete && !canStartCpu && !isIOComplete && !isNewArrival && !canSwitchIn) {
+        if (!isCpuComplete && !canStartCpu && !isIOComplete && !isNewArrival && !canSwitchIn && !canSwitchOut) {
             std::cerr << "ERROR: Nothing is able to be done\n";
             return;
         }
@@ -146,10 +151,14 @@ void ShortestJobFirst(std::vector<Process> processes, int switchTime, double lam
                 processes.erase(processes.begin() + current);
             }
 
-            currentTime += switchTime / 2;
+            switchOutTime = currentTime + switchTime / 2;
+            switchingOut = current;
+
+        } else if (canSwitchOut && switchOutTime <= blockingTime && switchOutTime <= newArrivalTime) {
+            currentTime = switchOutTime;
             current = -1;
+            switchingOut = -1;
             cpuCompleteTime = INT_MAX;
-            nextSwitchTime = currentTime;
 
         } else if (canSwitchIn && cpuSwitchTime < blockingTime && cpuSwitchTime < newArrivalTime) { //Switch into CPU
             currentTime = cpuSwitchTime;
@@ -230,6 +239,7 @@ void ShortestJobFirst(std::vector<Process> processes, int switchTime, double lam
         processes.erase(processes.begin());
     }
 
+    currentTime += switchTime/2;
     std::cout << "time " << currentTime << "ms: Simulator ended for SJF [Q empty]" << std::endl;
 
     FILE *fp;
