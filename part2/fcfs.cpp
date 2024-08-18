@@ -1,5 +1,6 @@
 #include <string>
 #include <iostream>
+#include <algorithm>
 #include <fstream>
 #include <vector>
 #include <queue>
@@ -36,18 +37,22 @@ int fcfs(vector<Process> allP, int switchTime) {
 
     int current = -1;
     unsigned int i = 0;
-    int cpuCompleteTime, newArrivalTime, blockingTime, cpuStartTime, nextStartTime = -1;
-    bool isCpuComplete, canStartCpu, isIOComplete, isNewArrival;
+    int cpuCompleteTime, newArrivalTime, blockingTime, cpuStartTime, nextSwitchTime = -1, switchingIn = -1, cpuSwitchTime = 0;
+    bool isCpuComplete, canStartCpu, isIOComplete, isNewArrival, canSwitchIn;
     while (!allP.empty()) {
-        blockingTime = cpuStartTime = newArrivalTime = INT_MAX;
-        isCpuComplete = canStartCpu = isIOComplete = isNewArrival = false;
-        //cpu burst completion
+        blockingTime = newArrivalTime = INT_MAX;
+        isCpuComplete = canStartCpu = isIOComplete = isNewArrival = canSwitchIn = false;
+        // CPU burst completion
         if (current != -1) {
             isCpuComplete = true;
-        } else if (!q.empty()) { //start using cpu
+        } else if (switchingIn != -1) { // Start using CPU
             canStartCpu = true;
-            cpuStartTime = nextStartTime;
+            cpuStartTime = cpuSwitchTime + switchTime/2;
+        } else if (!q.empty()) { // Switch into CPU
+            canSwitchIn = true;
+            cpuSwitchTime = max(time, nextSwitchTime);
         }
+
         //IO burst completion
         for (unsigned int j = 0; j < allP.size(); j++) {
             if (allP[j].getBlocking() != -1) {
@@ -61,13 +66,13 @@ int fcfs(vector<Process> allP, int switchTime) {
             isNewArrival = true;
         }
 
-        if (!isCpuComplete && !canStartCpu && !isIOComplete && !isNewArrival) {
+        if (!isCpuComplete && !canStartCpu && !isIOComplete && !isNewArrival && !canSwitchIn) {
             cerr << "ERROR: Nothing is able to be done\n";
             return -1;
         }
 
         //complete the cpu burst
-        if (isCpuComplete && min(cpuCompleteTime, blockingTime) == min(cpuCompleteTime, newArrivalTime)) {
+        if (isCpuComplete && cpuCompleteTime <= blockingTime && cpuCompleteTime <= newArrivalTime) {
             time = cpuCompleteTime;
             if (allP[current].isCpuBound()) {
                 cpuBoundBurstTime += allP[current].popFrontCPU();
@@ -95,46 +100,68 @@ int fcfs(vector<Process> allP, int switchTime) {
             time += switchTime/2;
             current = -1;
             cpuCompleteTime = INT_MAX;
-            if (!q.empty()) {
-                nextStartTime = time + switchTime/2;
-            } else {
-                nextStartTime = -1;
-            }
+            nextSwitchTime = time;
             
-        } else if (canStartCpu && min(cpuStartTime, blockingTime) == min(cpuStartTime, newArrivalTime)) { //start next cpu burst
+        } else if (canSwitchIn && cpuSwitchTime < blockingTime && cpuSwitchTime < newArrivalTime) { //switch into cpu
+            time = cpuSwitchTime;
             for (unsigned int j = 0; j < allP.size(); j++) {
                 if (allP[j].getId().compare(q.front().getId()) == 0) {
-                    current = j;
+                    switchingIn = j;
                     break;
                 }
             }
             q.pop();
-            if (nextStartTime == -1) {
-                time += switchTime/2;
-            } else {
-                time = nextStartTime;
-            }
-            if (allP[current].isCpuBound()) {
-                cpuBoundWaitTime += (time - allP[current].getWaiting() - switchTime/2);
+            if (allP[switchingIn].isCpuBound()) {
+                cpuBoundWaitTime += (time - allP[switchingIn].getWaiting());
                 cpuSwitches++;
             } else {
-                ioBoundWaitTime += (time - allP[current].getWaiting() - switchTime/2);
+                ioBoundWaitTime += (time - allP[switchingIn].getWaiting());
                 ioSwitches++;
             }
+
+        } else if (canStartCpu && cpuStartTime <= blockingTime && cpuStartTime <= newArrivalTime) { //start next cpu burst
+            // for (unsigned int j = 0; j < allP.size(); j++) {
+            //     if (allP[j].getId().compare(q.front().getId()) == 0) {
+            //         current = j;
+            //         break;
+            //     }
+            // }
+            // q.pop();
+            time = cpuStartTime;
+            current = switchingIn;
+            switchingIn = -1;
+            // if (allP[current].isCpuBound()) {
+            //     cpuBoundWaitTime += (time - allP[current].getWaiting() - switchTime/2);
+            //     cpuSwitches++;
+            // } else {
+            //     ioBoundWaitTime += (time - allP[current].getWaiting() - switchTime/2);
+            //     ioSwitches++;
+            // }
             int temp = allP[current].getFrontCPU();
             if (time < 10000) cout << "time " << time << "ms: Process " << allP[current].getId() << " started using the CPU for " << temp << "ms burst " << printQueue(q) << endl;
             cpuCompleteTime = time + temp;
-        } else if (blockingTime < newArrivalTime) { //complete the IO burst
+
+        } else if (blockingTime <= newArrivalTime) { //complete the IO burst
             time = blockingTime;
-            for (unsigned int j = 0; j < allP.size(); j++) {
+            unsigned int j;
+            int selector = -1;
+            for (j = 0; j < allP.size(); j++) {
                 if (allP[j].getBlocking() == time) {
-                    allP[j].setBlocking(-1);
-                    q.push(allP[j]);
-                    if (time < 10000) cout << "time " << time << "ms: Process " << allP[j].getId() << " completed I/O; added to ready queue " << printQueue(q) << endl;
-                    allP[j].setWaiting(time);
-                    break;
+                    if (selector == -1 || allP[j].getId().compare(allP[selector].getId()) < 0) {
+                        selector = j;
+                    }
                 }
             }
+            allP[selector].setBlocking(-1);
+            q.push(allP[selector]);
+            #ifndef DEBUG_MODE_SJF
+            if (time < 10000) {
+            #endif
+                std::cout << "time " << time << "ms: Process " << allP[selector].getId() << " completed I/O; added to ready queue " << printQueue(q) << std::endl;
+            #ifndef DEBUG_MODE_SJF
+            }
+            #endif
+            allP[selector].setWaiting(time);
             
         } else { //new process arrives
             q.push(allP[i]);

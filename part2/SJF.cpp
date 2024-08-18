@@ -28,8 +28,8 @@ void ShortestJobFirst(std::vector<Process> processes, int switchTime, double lam
     int current = -1; 
     int cpuCompleteTime = INT_MAX;
     unsigned int i = 0;
-    int blockingTime, cpuStartTime, newArrivalTime;
-    bool isCpuComplete, canStartCpu, isIOComplete, isNewArrival;
+    int blockingTime, cpuSwitchTime = 0, newArrivalTime, nextSwitchTime = -1, switchingIn = -1, cpuStartTime;
+    bool isCpuComplete, canStartCpu, isIOComplete, isNewArrival, canSwitchIn;
 
     // Variables to track statistics
     double cpuBoundWaitTime = 0, ioBoundWaitTime = 0;
@@ -51,15 +51,18 @@ void ShortestJobFirst(std::vector<Process> processes, int switchTime, double lam
     }
 
     while (!processes.empty()) {
-        blockingTime = cpuStartTime = newArrivalTime = INT_MAX;
-        isCpuComplete = canStartCpu = isIOComplete = isNewArrival = false;
+        blockingTime = newArrivalTime = INT_MAX;
+        isCpuComplete = canStartCpu = isIOComplete = isNewArrival = canSwitchIn = false;
 
         // CPU burst completion
         if (current != -1) {
             isCpuComplete = true;
-        } else if (!SJFqueue.empty()) {  // Start using CPU
+        } else if (switchingIn != -1) { // Start using CPU
             canStartCpu = true;
-            cpuStartTime = currentTime + switchTime / 2;
+            cpuStartTime = cpuSwitchTime + switchTime/2;
+        } else if (!SJFqueue.empty()) { // Switch into CPU
+            canSwitchIn = true;
+            cpuSwitchTime = std::max(currentTime, nextSwitchTime);
         }
 
         // I/O burst completion
@@ -76,13 +79,13 @@ void ShortestJobFirst(std::vector<Process> processes, int switchTime, double lam
             isNewArrival = true;
         }
 
-        if (!isCpuComplete && !canStartCpu && !isIOComplete && !isNewArrival) {
+        if (!isCpuComplete && !canStartCpu && !isIOComplete && !isNewArrival && !canSwitchIn) {
             std::cerr << "ERROR: Nothing is able to be done\n";
             return;
         }
 
         // Complete the CPU burst
-        if (isCpuComplete && std::min(cpuCompleteTime, blockingTime) == std::min(cpuCompleteTime, newArrivalTime)) {
+        if (isCpuComplete && cpuCompleteTime <= blockingTime && cpuCompleteTime <= newArrivalTime) {
             currentTime = cpuCompleteTime;
             int burstTime = processes[current].popFrontCPU();
             
@@ -104,84 +107,133 @@ void ShortestJobFirst(std::vector<Process> processes, int switchTime, double lam
             }
 
             if (!processes[current].isEmptyCPU()) {
+                #ifndef DEBUG_MODE_SJF
                 if (currentTime <= 9999) {
+                #endif
                     if (processes[current].getNumCPU() == 1) {
                         std::cout << "time " << currentTime << "ms: Process " << processes[current].getId() << " (tau " << processes[current].getTau() << "ms) completed a CPU burst; " << processes[current].getNumCPU() << " burst to go " << printQueue(SJFqueue) << std::endl;
                     } else {
                         std::cout << "time " << currentTime << "ms: Process " << processes[current].getId() << " (tau " << processes[current].getTau() << "ms) completed a CPU burst; " << processes[current].getNumCPU() << " bursts to go " << printQueue(SJFqueue) << std::endl;
                     }
+                #ifndef DEBUG_MODE_SJF
                 }
+                #endif
 
                 int oldTau = processes[current].getTau();
                 int newTau = std::ceil((alpha * burstTime) + ((1 - alpha) * oldTau));
                 processes[current].setTau(newTau);
                 processes[current].setPredictedRemaining(newTau);
 
+                #ifndef DEBUG_MODE_SJF
                 if (currentTime <= 9999) {
+                #endif
                     std::cout << "time " << currentTime << "ms: Recalculated tau for process " << processes[current].getId() 
                               << ": old tau " << oldTau << "ms ==> new tau " << newTau << "ms " << printQueue(SJFqueue) << std::endl;
+                #ifndef DEBUG_MODE_SJF
                 }
+                #endif
 
                 processes[current].setBlocking(currentTime + processes[current].popFrontIO() + switchTime / 2);
+                #ifndef DEBUG_MODE_SJF
                 if (currentTime <= 9999) {
+                #endif
                     std::cout << "time " << currentTime << "ms: Process " << processes[current].getId() << " switching out of CPU; blocking on I/O until time " << processes[current].getBlocking() << "ms " << printQueue(SJFqueue) << std::endl;
+                #ifndef DEBUG_MODE_SJF
                 }
+                #endif
             } else {
-                if (currentTime <= 9999) {
-                    std::cout << "time " << currentTime << "ms: Process " << processes[current].getId() << " terminated " << printQueue(SJFqueue) << std::endl;
-                } else {
-                    std::cout << "time " << currentTime << "ms: Process " << processes[current].getId() << " terminated " << printQueue(SJFqueue) << std::endl;
-                }
+                std::cout << "time " << currentTime << "ms: Process " << processes[current].getId() << " terminated " << printQueue(SJFqueue) << std::endl;
                 processes.erase(processes.begin() + current);
             }
 
             currentTime += switchTime / 2;
             current = -1;
             cpuCompleteTime = INT_MAX;
+            nextSwitchTime = currentTime;
 
-        } else if (canStartCpu && std::min(cpuStartTime, blockingTime) == std::min(cpuStartTime, newArrivalTime)) { // Start next CPU burst
+        } else if (canSwitchIn && cpuSwitchTime < blockingTime && cpuSwitchTime < newArrivalTime) { //Switch into CPU
+            currentTime = cpuSwitchTime;
             for (unsigned int j = 0; j < processes.size(); j++) {
                 if (processes[j].getId().compare(SJFqueue.top().getId()) == 0) {
-                    current = j;
+                    switchingIn = j;
                     break;
                 }
             }
             SJFqueue.pop();
-            currentTime += switchTime / 2;
-            int temp = processes[current].getFrontCPU();
-            
-            if (processes[current].isCpuBound()) {
-                cpuBoundWaitTime += (currentTime - processes[current].getWaiting() - switchTime / 2);
+            if (processes[switchingIn].isCpuBound()) {
+                cpuBoundWaitTime += (currentTime - processes[switchingIn].getWaiting());
                 cpuSwitches++;
             } else {
-                ioBoundWaitTime += (currentTime - processes[current].getWaiting() - switchTime / 2);
+                ioBoundWaitTime += (currentTime - processes[switchingIn].getWaiting());
                 ioSwitches++;
             }
+
+        } else if (canStartCpu && cpuStartTime <= blockingTime && cpuStartTime <= newArrivalTime) { // Start next CPU burst
+            // for (unsigned int j = 0; j < processes.size(); j++) {
+            //     if (processes[j].getId().compare(SJFqueue.top().getId()) == 0) {
+            //         current = j;
+            //         break;
+            //     }
+            // }
+            // SJFqueue.pop();
+            // if (nextSwitchTime < currentTime) {
+            //     currentTime += switchTime/2;
+            // } else {
+            //     currentTime = nextSwitchTime;
+            // }
+            currentTime = cpuStartTime;
+            current = switchingIn;
+            switchingIn = -1;
+            int temp = processes[current].getFrontCPU();
             
+            // if (processes[current].isCpuBound()) {
+            //     cpuBoundWaitTime += (currentTime - processes[current].getWaiting() - switchTime / 2);
+            //     cpuSwitches++;
+            // } else {
+            //     ioBoundWaitTime += (currentTime - processes[current].getWaiting() - switchTime / 2);
+            //     ioSwitches++;
+            // }
+            
+            #ifndef DEBUG_MODE_SJF
             if (currentTime <= 9999) {
+            #endif
                 std::cout << "time " << currentTime << "ms: Process " << processes[current].getId() << " (tau " << processes[current].getTau() << "ms) started using the CPU for " << temp << "ms burst " << printQueue(SJFqueue) << std::endl;
+            #ifndef DEBUG_MODE_SJF
             }
+            #endif
             cpuCompleteTime = currentTime + temp;
-        } else if (blockingTime < newArrivalTime) { // Complete the I/O burst
+        } else if (blockingTime <= newArrivalTime) { // Complete the I/O burst
             currentTime = blockingTime;
-            for (unsigned int j = 0; j < processes.size(); j++) {
+            unsigned int j;
+            int selector = -1;
+            for (j = 0; j < processes.size(); j++) {
                 if (processes[j].getBlocking() == currentTime) {
-                    processes[j].setBlocking(-1);
-                    SJFqueue.push(processes[j]);
-                    if (currentTime <= 9999) {
-                        std::cout << "time " << currentTime << "ms: Process " << processes[j].getId() <<" (tau " << processes[j].getTau() << "ms) completed I/O; added to ready queue " << printQueue(SJFqueue) << std::endl;
+                    if (selector == -1 || processes[j].getId().compare(processes[selector].getId()) < 0) {
+                        selector = j;
                     }
-                    processes[j].setWaiting(currentTime);
-                    break;
                 }
             }
+            processes[selector].setBlocking(-1);
+            SJFqueue.push(processes[selector]);
+            #ifndef DEBUG_MODE_SJF
+            if (currentTime <= 9999) {
+            #endif
+                std::cout << "time " << currentTime << "ms: Process " << processes[selector].getId() <<" (tau " << processes[selector].getTau() << "ms) completed I/O; added to ready queue " << printQueue(SJFqueue) << std::endl;
+            #ifndef DEBUG_MODE_SJF
+            }
+            #endif
+            processes[selector].setWaiting(currentTime);
             
         } else { // New process arrives
             SJFqueue.push(processes[i]);
             currentTime = processes[i].getArrivalTime();
+            #ifndef DEBUG_MODE_SJF
             if (currentTime <= 9999) {
+            #endif
                 std::cout << "time " << currentTime << "ms: Process " << processes[i].getId() << " (tau " << processes[i].getTau() << "ms) arrived; added to ready queue " << printQueue(SJFqueue) << std::endl;
+            #ifndef DEBUG_MODE_SJF
             }
+            #endif
             processes[i].setWaiting(currentTime);
             i++;
         }

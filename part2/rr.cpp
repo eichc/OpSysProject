@@ -33,8 +33,11 @@ string printQueue(priority_queue<Process, vector<Process>, Compare> q) {
     return result;
 }
 
+extern string printQueue(queue<Process> q);
+
 int rr(vector<Process> allP, int switchTime, int slice) {
-    priority_queue<Process, vector<Process>, Compare> q;
+    //priority_queue<Process, vector<Process>, Compare> q;
+    queue<Process> q;
     int time = 0;
     cout << "time " << time << "ms: Simulator started for RR " << printQueue(q) << endl;
 
@@ -44,24 +47,27 @@ int rr(vector<Process> allP, int switchTime, int slice) {
 
     int current = -1;
     unsigned int i = 0;
-    int cpuCompleteTime, newArrivalTime, blockingTime, cpuStartTime, preemptTime, nextStartTime = -1;
-    bool isCpuComplete, canStartCpu, isIOComplete, isNewArrival, isPreemption;
+    int switchOutTime = 0, newArrivalTime, blockingTime, cpuStartTime, preemptTime, switchingIn = -1, switchInTime = 0;
+    int switchingOut = -1, cpuCompleteTime;
+    bool isCpuComplete, canStartCpu, isIOComplete, isNewArrival, isPreemption, canSwitchIn, canSwitchOut;
     while (!allP.empty()) {
-        blockingTime = cpuStartTime = newArrivalTime = INT_MAX;
-        isCpuComplete = canStartCpu = isIOComplete = isNewArrival = isPreemption = false;
+        blockingTime = newArrivalTime = INT_MAX;
+        isCpuComplete = canStartCpu = isIOComplete = isNewArrival = isPreemption = canSwitchIn = canSwitchOut = false;
         //cpu burst completion
         if (current != -1) {
-            if (preemptTime == -1 || cpuCompleteTime == -1) {
-                cerr << "ERROR: Preempt time and Complete time both -1" << endl;
-                return -1;
+            if (switchingOut != -1) {
+                canSwitchOut = true;
             } else if (cpuCompleteTime <= preemptTime) {
                 isCpuComplete = true;
             } else {
                 isPreemption = true;
             }
-        } else if (!q.empty()) { //start using cpu
+        } else if (switchingIn != -1) { // Start using CPU
             canStartCpu = true;
-            cpuStartTime = nextStartTime;
+            cpuStartTime = switchInTime + switchTime/2;
+        } else if (!q.empty()) { // Switch into CPU
+            canSwitchIn = true;
+            switchInTime = max(time, switchOutTime);
         }
         //IO burst completion
         for (unsigned int j = 0; j < allP.size(); j++) {
@@ -76,13 +82,13 @@ int rr(vector<Process> allP, int switchTime, int slice) {
             isNewArrival = true;
         }
 
-        if (!isCpuComplete && !canStartCpu && !isIOComplete && !isNewArrival && !isPreemption) {
+        if (!isCpuComplete && !canStartCpu && !isIOComplete && !isNewArrival && !isPreemption && !canSwitchIn && !canSwitchOut) {
             cerr << "ERROR: Nothing is able to be done\n";
             return -1;
         }
 
         //complete the cpu burst
-        if ((isCpuComplete) && min(cpuCompleteTime, blockingTime) == min(cpuCompleteTime, newArrivalTime)) {
+        if ((isCpuComplete) && cpuCompleteTime <= blockingTime && cpuCompleteTime <= newArrivalTime) {
             time = cpuCompleteTime;
             if (allP[current].isCpuBound()) {
                 if (allP[current].getFrontCPU() <= slice) {
@@ -132,16 +138,10 @@ int rr(vector<Process> allP, int switchTime, int slice) {
                 }
                 #endif
             }
-            time += switchTime/2;
-            current = -1;
-            cpuCompleteTime = preemptTime = INT_MAX;
-            if (!q.empty()) {
-                nextStartTime = time + switchTime/2;
-            } else {
-                nextStartTime = -1;
-            }
+            switchingOut = current;
+            switchOutTime = time + switchTime/2;
             
-        } else if ((isPreemption) && min(preemptTime, blockingTime) == min(preemptTime, newArrivalTime)) { //preemption
+        } else if ((isPreemption) && preemptTime <= blockingTime && preemptTime <= newArrivalTime) { //preemption
             time = preemptTime;
             if (allP[current].getRemaining() == -1) {
                 allP[current].setRemaining(allP[current].getFrontCPU() - slice);
@@ -165,44 +165,65 @@ int rr(vector<Process> allP, int switchTime, int slice) {
                 #ifndef DEBUG_MODE_RR
                 }
                 #endif
-                time += switchTime/2;
                 allP[current].setTimeAdded(time);
-                q.push(allP[current]);
-                allP[current].setWaiting(time);
+                // q.push(allP[current]);
+                // allP[current].setWaiting(time);
                 if (allP[current].isCpuBound()) {
                     cpuPreemptions++;
                 } else {
                     ioPreemptions++;
                 }
-                current = -1;
-                cpuCompleteTime = preemptTime = INT_MAX;
-                if (!q.empty()) {
-                    nextStartTime = time + switchTime/2;
-                } else {
-                    nextStartTime = -1;
-                }
+                switchingOut = current;
+                switchOutTime = time + switchTime/2;
             }
 
-        } else if (canStartCpu && cpuStartTime <= blockingTime && cpuStartTime <= newArrivalTime) { //start next cpu burst
+        } else if (canSwitchOut && switchOutTime <= blockingTime && switchOutTime <= newArrivalTime) { //Switch out of CPU
+            time = switchOutTime;
+            if (time == cpuCompleteTime + switchTime/2) { //cpu completed
+                ;
+            } else { //was preempted
+                q.push(allP[current]);
+                allP[current].setWaiting(time);
+            }
+            current = -1;
+            switchingOut = -1;
+            cpuCompleteTime = preemptTime = INT_MAX;
+
+        } else if (canSwitchIn && switchInTime < blockingTime && switchInTime < newArrivalTime) { //Switch into CPU
+            time = switchInTime;
             for (unsigned int j = 0; j < allP.size(); j++) {
-                if (allP[j].getId().compare(q.top().getId()) == 0) {
-                    current = j;
+                if (allP[j].getId().compare(q.front().getId()) == 0) {
+                    switchingIn = j;
                     break;
                 }
             }
             q.pop();
-            if (nextStartTime == -1) {
-                time += switchTime/2;
-            } else {
-                time = cpuStartTime;
-            }
-            if (allP[current].isCpuBound()) {
-                cpuBoundWaitTime += (time - allP[current].getWaiting() - switchTime/2);
+            if (allP[switchingIn].isCpuBound()) {
+                cpuBoundWaitTime += (time - allP[switchingIn].getWaiting());
                 cpuSwitches++;
             } else {
-                ioBoundWaitTime += (time - allP[current].getWaiting() - switchTime/2);
+                ioBoundWaitTime += (time - allP[switchingIn].getWaiting());
                 ioSwitches++;
             }
+
+        } else if (canStartCpu && cpuStartTime <= blockingTime && cpuStartTime <= newArrivalTime) { //start next cpu burst
+            // for (unsigned int j = 0; j < allP.size(); j++) {
+            //     if (allP[j].getId().compare(q.top().getId()) == 0) {
+            //         current = j;
+            //         break;
+            //     }
+            // }
+            // q.pop();
+            time = cpuStartTime;
+            current = switchingIn;
+            switchingIn = -1;
+            // if (allP[current].isCpuBound()) {
+            //     cpuBoundWaitTime += (time - allP[current].getWaiting() - switchTime/2);
+            //     cpuSwitches++;
+            // } else {
+            //     ioBoundWaitTime += (time - allP[current].getWaiting() - switchTime/2);
+            //     ioSwitches++;
+            // }
             int temp;
             if (allP[current].getRemaining() != -1) {
                 temp = allP[current].getRemaining();
@@ -228,22 +249,26 @@ int rr(vector<Process> allP, int switchTime, int slice) {
 
         } else if (blockingTime <= newArrivalTime) { //complete the IO burst
             time = blockingTime;
-            for (unsigned int j = 0; j < allP.size(); j++) {
+            unsigned int j;
+            int selector = -1;
+            for (j = 0; j < allP.size(); j++) {
                 if (allP[j].getBlocking() == time) {
-                    allP[j].setBlocking(-1);
-                    allP[j].setTimeAdded(time);
-                    q.push(allP[j]);
-                    #ifndef DEBUG_MODE_RR
-                    if (time < 10000) {
-                    #endif
-                        cout << "time " << time << "ms: Process " << allP[j].getId() << " completed I/O; added to ready queue " << printQueue(q) << endl;
-                    #ifndef DEBUG_MODE_RR
+                    if (selector == -1 || allP[j].getId().compare(allP[selector].getId()) < 0) {
+                        selector = j;
                     }
-                    #endif
-                    allP[j].setWaiting(time);
-                    break;
                 }
             }
+            allP[selector].setBlocking(-1);
+            allP[selector].setTimeAdded(time);
+            q.push(allP[selector]);
+            #ifndef DEBUG_MODE_RR
+            if (time < 10000) {
+            #endif
+                cout << "time " << time << "ms: Process " << allP[selector].getId() << " completed I/O; added to ready queue " << printQueue(q) << endl;
+            #ifndef DEBUG_MODE_RR
+            }
+            #endif
+            allP[selector].setWaiting(time);
             
         } else { //new process arrives
             q.push(allP[i]);
@@ -260,7 +285,7 @@ int rr(vector<Process> allP, int switchTime, int slice) {
         }
     }
     
-    cout << "time " << time << "ms: Simulator ended for RR " << printQueue(q) << endl;
+    cout << "time " << time + switchTime/2 << "ms: Simulator ended for RR " << printQueue(q) << endl;
 
     //simout
     FILE *fp;

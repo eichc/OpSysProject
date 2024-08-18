@@ -16,8 +16,8 @@ void srt(std::vector<Process> processes, int switchTime, double lambda, double a
     int current = -1; 
     int cpuCompleteTime = INT_MAX;
     unsigned int i = 0;
-    int blockingTime, cpuStartTime, newArrivalTime, nextStartTime = -1;
-    bool isCpuComplete, canStartCpu, isIOComplete, isNewArrival;
+    int blockingTime, cpuStartTime, newArrivalTime, nextSwitchTime = -1, switchingIn = -1, cpuSwitchTime = 0;
+    bool isCpuComplete, canStartCpu, isIOComplete, isNewArrival, canSwitchIn;
 
     // Variables to track statistics
     double cpuBoundWaitTime = 0, ioBoundWaitTime = 0;
@@ -41,15 +41,18 @@ void srt(std::vector<Process> processes, int switchTime, double lambda, double a
     }
 
     while (!processes.empty()) {
-        blockingTime = cpuStartTime = newArrivalTime = INT_MAX;
-        isCpuComplete = canStartCpu = isIOComplete = isNewArrival = false;
+        blockingTime = newArrivalTime = INT_MAX;
+        isCpuComplete = canStartCpu = isIOComplete = isNewArrival = canSwitchIn = false;
 
         // CPU burst completion
         if (current != -1) {
             isCpuComplete = true;
-        } else if (!SRTqueue.empty()) {  // Start using CPU
+        } else if (switchingIn != -1) { // Start using CPU
             canStartCpu = true;
-            cpuStartTime = std::max(currentTime, nextStartTime);
+            cpuStartTime = cpuSwitchTime + switchTime/2;
+        } else if (!SRTqueue.empty()) { // Switch into CPU
+            canSwitchIn = true;
+            cpuSwitchTime = std::max(currentTime, nextSwitchTime);
         }
 
         // I/O burst completion
@@ -66,13 +69,13 @@ void srt(std::vector<Process> processes, int switchTime, double lambda, double a
             isNewArrival = true;
         }
 
-        if (!isCpuComplete && !canStartCpu && !isIOComplete && !isNewArrival) {
+        if (!isCpuComplete && !canStartCpu && !isIOComplete && !isNewArrival && !canSwitchIn) {
             std::cerr << "ERROR: Nothing is able to be done\n";
             return;
         }
 
         // Complete the CPU burst
-        if (isCpuComplete && std::min(cpuCompleteTime, blockingTime) == std::min(cpuCompleteTime, newArrivalTime)) {
+        if (isCpuComplete && cpuCompleteTime <= blockingTime && cpuCompleteTime <= newArrivalTime) {
             currentTime = cpuCompleteTime;
             int burstTime = processes[current].popFrontCPU();
             
@@ -137,34 +140,50 @@ void srt(std::vector<Process> processes, int switchTime, double lambda, double a
             currentTime += switchTime / 2;
             current = -1;
             cpuCompleteTime = INT_MAX;
-            //if (!SRTqueue.empty()) {
-                nextStartTime = currentTime + switchTime/2;
-            //} else {
-            //    nextStartTime = -1;
-            //}
+            nextSwitchTime = currentTime;
 
-        } else if (canStartCpu && std::min(cpuStartTime, blockingTime) == std::min(cpuStartTime, newArrivalTime)) { // Start next CPU burst
+        } else if (canSwitchIn && cpuSwitchTime < blockingTime && cpuSwitchTime < newArrivalTime) { //switch into CPU
+            currentTime = cpuSwitchTime;
             for (unsigned int j = 0; j < processes.size(); j++) {
                 if (processes[j].getId().compare(SRTqueue.top().getId()) == 0) {
-                    current = j;
+                    switchingIn = j;
                     break;
                 }
             }
             SRTqueue.pop();
-            if (nextStartTime < currentTime) {
-                currentTime += switchTime/2;
-            } else {
-                currentTime = nextStartTime;
-            }
-            int temp;
-            
-            if (processes[current].isCpuBound()) {
-                cpuBoundWaitTime += (currentTime - processes[current].getWaiting() - switchTime / 2);
+            if (processes[switchingIn].isCpuBound()) {
+                cpuBoundWaitTime += (currentTime - processes[switchingIn].getWaiting());
                 cpuSwitches++;
             } else {
-                ioBoundWaitTime += (currentTime - processes[current].getWaiting() - switchTime / 2);
+                ioBoundWaitTime += (currentTime - processes[switchingIn].getWaiting());
                 ioSwitches++;
             }
+
+        } else if (canStartCpu && cpuStartTime <= blockingTime && cpuStartTime <= newArrivalTime) { // Start next CPU burst
+            // for (unsigned int j = 0; j < processes.size(); j++) {
+            //     if (processes[j].getId().compare(SRTqueue.top().getId()) == 0) {
+            //         current = j;
+            //         break;
+            //     }
+            // }
+            // SRTqueue.pop();
+            // if (nextSwitchTime < currentTime) {
+            //     currentTime += switchTime/2;
+            // } else {
+            //     currentTime = nextSwitchTime;
+            // }
+            currentTime = cpuStartTime;
+            current = switchingIn;
+            switchingIn = -1;
+            int temp;
+            
+            // if (processes[current].isCpuBound()) {
+            //     cpuBoundWaitTime += (currentTime - processes[current].getWaiting() - switchTime / 2);
+            //     cpuSwitches++;
+            // } else {
+            //     ioBoundWaitTime += (currentTime - processes[current].getWaiting() - switchTime / 2);
+            //     ioSwitches++;
+            // }
             processes[current].setStart(currentTime);
             
                 if (processes[current].getRemaining() != -1) {
@@ -228,11 +247,7 @@ void srt(std::vector<Process> processes, int switchTime, double lambda, double a
                         }
                         current = -1;
                         cpuCompleteTime = INT_MAX;
-                        // if (!SRTqueue.empty()) {
-                             nextStartTime = currentTime + switchTime/2;
-                        // } else {
-                        //     nextStartTime = -1;
-                        // }
+                        nextSwitchTime = currentTime;
                     } else { //no preemption
                         #ifndef DEBUG_MODE_SRT
                         if (currentTime <= 9999) {
