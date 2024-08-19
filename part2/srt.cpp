@@ -139,6 +139,7 @@ void srt(std::vector<Process> processes, int switchTime, double lambda, double a
             } else {
                 std::cout << "time " << currentTime << "ms: Process " << processes[current].getId() << " terminated " << printQueue(SRTqueue) << std::endl;
                 processes.erase(processes.begin() + current);
+                i--;
             }
 
 
@@ -224,7 +225,7 @@ void srt(std::vector<Process> processes, int switchTime, double lambda, double a
                     SRTqueue.push(processes[j]);
                     processes[j].setWaiting(currentTime);
                     //check for preemption
-                    if (current != -1 && processes[j].getTau() < processes[current].getPredictedRemaining() - (currentTime - processes[current].getStart())) {
+                    if (current != -1 && switchingOut == -1 && processes[j].getTau() < processes[current].getPredictedRemaining() - (currentTime - processes[current].getStart())) {
                         int ran = currentTime - processes[current].getStart();
                         if (processes[current].getRemaining() == -1) {
                             #ifndef DEBUG_MODE_SRT

@@ -92,14 +92,33 @@ int fcfs(vector<Process> allP, int switchTime) {
                     itr++;
                 }
                 allP.erase(itr);
+                i--;
             } else {
                 if (allP[current].getNumCPU() == 1) {
-                    if (time < 10000) cout << "time " << time << "ms: Process " << allP[current].getId() << " completed a CPU burst; " << allP[current].getNumCPU() << " burst to go " << printQueue(q) << endl;
+                    #ifndef DEBUG_MODE_FCFS
+                    if (time < 10000) {
+                    #endif
+                        cout << "time " << time << "ms: Process " << allP[current].getId() << " completed a CPU burst; " << allP[current].getNumCPU() << " burst to go " << printQueue(q) << endl;
+                    #ifndef DEBUG_MODE_FCFS
+                    }
+                    #endif
                 } else {
-                    if (time < 10000) cout << "time " << time << "ms: Process " << allP[current].getId() << " completed a CPU burst; " << allP[current].getNumCPU() << " bursts to go " << printQueue(q) << endl;
+                    #ifndef DEBUG_MODE_FCFS
+                    if (time < 10000) {
+                    #endif
+                        cout << "time " << time << "ms: Process " << allP[current].getId() << " completed a CPU burst; " << allP[current].getNumCPU() << " bursts to go " << printQueue(q) << endl;
+                    #ifndef DEBUG_MODE_FCFS
+                    }
+                    #endif
                 }
                 allP[current].setBlocking(time + allP[current].popFrontIO() + switchTime/2);
-                if (time < 10000) cout << "time " << time << "ms: Process " << allP[current].getId() << " switching out of CPU; blocking on I/O until time " << allP[current].getBlocking() << "ms " << printQueue(q) << endl;
+                #ifndef DEBUG_MODE_FCFS
+                if (time < 10000) {
+                #endif
+                    cout << "time " << time << "ms: Process " << allP[current].getId() << " switching out of CPU; blocking on I/O until time " << allP[current].getBlocking() << "ms " << printQueue(q) << endl;
+                #ifndef DEBUG_MODE_FCFS
+                }
+                #endif
             }
             switchOutTime = time + switchTime/2;
             switchingOut = current;
@@ -133,7 +152,13 @@ int fcfs(vector<Process> allP, int switchTime) {
             switchingIn = -1;
 
             int temp = allP[current].getFrontCPU();
-            if (time < 10000) cout << "time " << time << "ms: Process " << allP[current].getId() << " started using the CPU for " << temp << "ms burst " << printQueue(q) << endl;
+            #ifndef DEBUG_MODE_FCFS
+            if (time < 10000) {
+            #endif
+                cout << "time " << time << "ms: Process " << allP[current].getId() << " started using the CPU for " << temp << "ms burst " << printQueue(q) << endl;
+            #ifndef DEBUG_MODE_FCFS
+            }
+            #endif
             cpuCompleteTime = time + temp;
 
         } else if (blockingTime <= newArrivalTime) { //complete the IO burst
@@ -149,11 +174,11 @@ int fcfs(vector<Process> allP, int switchTime) {
             }
             allP[selector].setBlocking(-1);
             q.push(allP[selector]);
-            #ifndef DEBUG_MODE_SJF
+            #ifndef DEBUG_MODE_FCFS
             if (time < 10000) {
             #endif
                 std::cout << "time " << time << "ms: Process " << allP[selector].getId() << " completed I/O; added to ready queue " << printQueue(q) << std::endl;
-            #ifndef DEBUG_MODE_SJF
+            #ifndef DEBUG_MODE_FCFS
             }
             #endif
             allP[selector].setWaiting(time);
@@ -161,7 +186,13 @@ int fcfs(vector<Process> allP, int switchTime) {
         } else { //new process arrives
             q.push(allP[i]);
             time = allP[i].getArrivalTime();
-            if (time < 10000) cout << "time " << time << "ms: Process " << allP[i].getId() << " arrived; added to ready queue " << printQueue(q) << endl;
+            #ifndef DEBUG_MODE_FCFS
+            if (time < 10000) {
+            #endif
+                cout << "time " << time << "ms: Process " << allP[i].getId() << " arrived; added to ready queue " << printQueue(q) << endl;
+            #ifndef DEBUG_MODE_FCFS
+            }
+            #endif
             allP[i].setWaiting(time);
             i++;
         }

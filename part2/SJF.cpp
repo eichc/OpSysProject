@@ -149,6 +149,7 @@ void ShortestJobFirst(std::vector<Process> processes, int switchTime, double lam
             } else {
                 std::cout << "time " << currentTime << "ms: Process " << processes[current].getId() << " terminated " << printQueue(SJFqueue) << std::endl;
                 processes.erase(processes.begin() + current);
+                i--;
             }
 
             switchOutTime = currentTime + switchTime / 2;

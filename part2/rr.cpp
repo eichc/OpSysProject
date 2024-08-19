@@ -86,6 +86,7 @@ int rr(vector<Process> allP, int switchTime, int slice) {
                     itr++;
                 }
                 allP.erase(itr);
+                i--;
             } else {
                 if (allP[current].getNumCPU() == 1) {
                     #ifndef DEBUG_MODE_RR
